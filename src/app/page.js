@@ -16,7 +16,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [dictionary, setDictionary] = useState([]);
   const [grammarManual, setGrammarManual] = useState({});
-  const [inputText, setInputText] = useState('La empresa hoy');
+  const [inputText, setInputText] = useState('Sensei leer libro');
   const [activeTab, setActiveTab] = useState('inicio');
   const [search, setSearch] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -74,9 +74,13 @@ export default function App() {
 
   const result = useMemo(() => {
     const dictMap = new Map();
-    MASTER_SEED.VOCABULARY.forEach(item => dictMap.set(item.esp.toLowerCase(), item));
+    MASTER_SEED.VOCABULARY.forEach(item => {
+      dictMap.set(item.esp.toLowerCase(), item);
+      if (item.romaji) dictMap.set(item.romaji.toLowerCase(), item);
+    });
     dictionary.forEach(item => {
         if (item && item.esp) dictMap.set(item.esp.toLowerCase(), item);
+        if (item && item.romaji) dictMap.set(item.romaji.toLowerCase(), item);
     });
     const currentDict = Array.from(dictMap.values());
 
