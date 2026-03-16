@@ -84,7 +84,7 @@ export default function App() {
     });
     const currentDict = Array.from(dictMap.values());
 
-    const cleanText = inputText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?¿¡]/g, "");
+    const cleanText = inputText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?¿¡]/g, " ");
     const words = cleanText.split(/\s+/).filter(w => w.length > 0);
 
     let subjects = [];
@@ -94,7 +94,11 @@ export default function App() {
     let reglasAplicadas = [];
 
     words.forEach((word) => {
-      const match = currentDict.find(d => d.claves && d.claves.some(c => String(c).toLowerCase() === word));
+      // Try to find an exact match first
+      let match = currentDict.find(d => d.romaji && d.romaji.toLowerCase() === word);
+      if (!match) {
+        match = currentDict.find(d => d.claves && d.claves.some(c => String(c).toLowerCase() === word));
+      }
 
       if (match) {
         const item = { ...match, status: 'found' };
@@ -154,6 +158,41 @@ export default function App() {
     return { oracion: oracionFinal.join(" ") + (oracionFinal.length > 0 ? "。" : ""), desglose, uniqueRules };
   }, [inputText, dictionary]);
 
+  const generateLocalResponse = (input) => {
+    const cleanInput = input.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?¿¡]/g, "");
+    const inputWords = cleanInput.split(/\s+/).filter(w => w.length > 0);
+
+    // Search Vocabulary
+    const foundWords = dictionary.filter(d =>
+      inputWords.some(word => d.claves && d.claves.some(c => String(c).toLowerCase() === word))
+    ).slice(0, 5);
+
+    // Search Grammar
+    const foundGrammar = Object.values(grammarManual).filter(g =>
+      inputWords.some(word =>
+        g.regla.toLowerCase().includes(word) ||
+        (g.detalles && g.detalles.some(d => d.toLowerCase().includes(word)))
+      )
+    ).slice(0, 3);
+
+    if (foundWords.length === 0 && foundGrammar.length === 0) {
+      return "Sensei medita sobre tus palabras. Mi biblioteca interna no encuentra una conexión directa en este momento, pero te animo a seguir practicando las bases.";
+    }
+
+    let response = "He consultado los pergaminos internos. Esto es lo que he encontrado para ti: \n\n";
+
+    if (foundWords.length > 0) {
+      response += "**Vocabulario:**\n" + foundWords.map(w => `- ${w.esp}: ${w.romaji}`).join("\n") + "\n\n";
+    }
+
+    if (foundGrammar.length > 0) {
+      response += "**Sabiduría Gramatical:**\n" + foundGrammar.map(g => `- ${g.regla}: ${g.detalles[0]}`).join("\n");
+    }
+
+    response += "\n\n*Nota: La conexión espiritual con Gemini está ausente. Utilizo mi conocimiento local para guiarte.*";
+    return response;
+  };
+
   const handleChat = async () => {
     if (!chatInput.trim() || isTyping) return;
     const userMsg = chatInput;
@@ -162,19 +201,11 @@ export default function App() {
     setIsTyping(true);
 
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
-    if (!apiKey) {
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          text: "Sensei requiere una llave espiritual (API Key) para canalizar el conocimiento de Gemini. Por favor, configura NEXT_PUBLIC_GEMINI_API_KEY."
-        }]);
-        setIsTyping(false);
-      }, 1000);
-      return;
-    }
-
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
+
     try {
+      if (!apiKey) throw new Error("No API Key");
+
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -184,12 +215,13 @@ export default function App() {
         })
       });
 
-      if (!response.ok) throw new Error("API Limit or Error");
+      if (!response.ok) throw new Error("API Error");
 
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake, no he podido procesar tu consulta." }]);
     } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', text: "La conexión con el plano espiritual se ha interrumpido. Inténtalo de nuevo más tarde." }]);
+      const localMsg = generateLocalResponse(userMsg);
+      setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
     }
     finally { setIsTyping(false); }
   };
