@@ -1,0 +1,17 @@
+{
+  "name": "AdventoursCR Nihongo",
+  "short_name": "Nihongo",
+  "description": "App para aprender japonés con IA y gramática",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#BC2424",
+  "icons": [
+    {
+      "src": "https://adventours-nihongo.web.app/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
