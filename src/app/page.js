@@ -200,13 +200,12 @@ export default function App() {
     setChatInput('');
     setIsTyping(true);
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const deepseekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || "";
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
 
-    try {
-      if (!apiKey) throw new Error("No API Key");
-
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const tryGemini = async (model) => {
+      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -214,16 +213,65 @@ export default function App() {
           systemInstruction: { parts: [{ text: systemPrompt }] }
         })
       });
+      if (!resp.ok) throw new Error(`Gemini ${model} Error`);
+      const data = await resp.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text;
+    };
 
-      if (!response.ok) throw new Error("API Error");
+    const tryDeepSeek = async () => {
+      const resp = await fetch("https://api.deepseek.com/chat/completions", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${deepseekKey}`
+        },
+        body: JSON.stringify({
+          model: "deepseek-chat",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMsg }
+          ],
+          stream: false
+        })
+      });
+      if (!resp.ok) throw new Error("DeepSeek Error");
+      const data = await resp.json();
+      return data.choices?.[0]?.message?.content;
+    };
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake, no he podido procesar tu consulta." }]);
+    try {
+      let aiResponse;
+      if (geminiKey) {
+        try {
+          aiResponse = await tryGemini('gemini-2.0-flash');
+        } catch (e20) {
+          try {
+            aiResponse = await tryGemini('gemini-1.5-flash');
+          } catch (e15) {
+            console.warn("Gemini fallbacks failed", e15);
+          }
+        }
+      }
+
+      if (!aiResponse && deepseekKey) {
+        try {
+          aiResponse = await tryDeepSeek();
+        } catch (eds) {
+          console.warn("DeepSeek fallback failed", eds);
+        }
+      }
+
+      if (aiResponse) {
+        setMessages(prev => [...prev, { role: 'assistant', text: aiResponse }]);
+      } else {
+        throw new Error("All AI tiers failed");
+      }
     } catch (e) {
       const localMsg = generateLocalResponse(userMsg);
       setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
+    } finally {
+      setIsTyping(false);
     }
-    finally { setIsTyping(false); }
   };
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
