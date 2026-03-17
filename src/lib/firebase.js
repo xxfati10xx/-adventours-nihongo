@@ -2,6 +2,13 @@ import { initializeApp } from 'firebase/app';
 import { getAnalytics } from 'firebase/analytics';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+
+/**
+ * PRODUCTION NOTE:
+ * For production security (APK/Web), Vertex AI for Firebase uses the 'firebase/ai' SDK.
+ * This protects your API Key by routing requests through Firebase's backend.
+ * For maximum security, enable 'Firebase App Check' in the Firebase Console.
+ */
 import { getAI, getGenerativeModel, VertexAIBackend } from "firebase/ai";
 
 const firebaseConfig = {

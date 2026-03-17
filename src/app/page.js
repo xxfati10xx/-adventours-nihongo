@@ -164,9 +164,6 @@ export default function App() {
       .map(title => reglasAplicadas.find(a => a.title === title));
 
     const finalOracion = oracionFinal.join(" ") + (oracionFinal.length > 0 ? "。" : "");
-    if (finalOracion.length > 0 && !finalOracion.includes('?')) {
-        // Subtle hanko trigger for successful translation
-    }
     return { oracion: finalOracion, desglose, uniqueRules };
   }, [inputText, dictionary]);
 
@@ -281,20 +278,37 @@ export default function App() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
+  const petals = useMemo(() => {
+    return [...Array(15)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      width: Math.random() * 10 + 5,
+      height: Math.random() * 8 + 4,
+      duration: Math.random() * 10 + 10,
+      delay: Math.random() * 10
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (result.oracion && result.oracion.length > 5 && !result.oracion.includes('?')) {
+      triggerHanko("N5");
+    }
+  }, [result.oracion]);
+
   return (
     <div className={`min-h-screen font-sans theme-transition relative overflow-x-hidden pb-24 md:pb-8 ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#FAF7F2] text-[#2C3E50]'}`}>
 
       <div className="fixed inset-0 pointer-events-none z-0">
-        {[...Array(12)].map((_, i) => (
+        {petals.map((p) => (
           <div
-            key={i}
+            key={p.id}
             className="sakura-petal"
             style={{
-              left: `${Math.random() * 100}vw`,
-              width: `${Math.random() * 10 + 5}px`,
-              height: `${Math.random() * 8 + 4}px`,
-              animation: `sakura-fall ${Math.random() * 10 + 10}s linear infinite`,
-              animationDelay: `${Math.random() * 10}s`
+              left: `${p.left}vw`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              animation: `sakura-fall ${p.duration}s linear infinite`,
+              animationDelay: `${p.delay}s`
             }}
           />
         ))}
