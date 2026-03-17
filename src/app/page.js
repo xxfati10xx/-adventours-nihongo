@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
-import { auth, db, appId, MASTER_SEED } from '@/lib/firebase';
+import { auth, db, appId, MASTER_SEED, generativeModel, generativeModelFallback } from '@/lib/firebase';
 
 import Header from '@/components/layout/Header';
 import MobileFooter from '@/components/layout/MobileFooter';
@@ -200,22 +200,16 @@ export default function App() {
     setChatInput('');
     setIsTyping(true);
 
-    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     const deepseekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || "";
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
 
-    const tryGemini = async (model) => {
-      const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: userMsg }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] }
-        })
+    const tryGeminiVertex = async (modelInstance) => {
+      const result = await modelInstance.generateContent({
+        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
       });
-      if (!resp.ok) throw new Error(`Gemini ${model} Error`);
-      const data = await resp.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const response = await result.response;
+      return response.text();
     };
 
     const tryDeepSeek = async () => {
@@ -241,15 +235,14 @@ export default function App() {
 
     try {
       let aiResponse;
-      if (geminiKey) {
+      try {
+        aiResponse = await tryGeminiVertex(generativeModel);
+      } catch (e20) {
+        console.warn("Gemini 2.0 Vertex failed", e20);
         try {
-          aiResponse = await tryGemini('gemini-2.0-flash');
-        } catch (e20) {
-          try {
-            aiResponse = await tryGemini('gemini-1.5-flash');
-          } catch (e15) {
-            console.warn("Gemini fallbacks failed", e15);
-          }
+          aiResponse = await tryGeminiVertex(generativeModelFallback);
+        } catch (e15) {
+          console.warn("Gemini 1.5 Vertex fallback failed", e15);
         }
       }
 
