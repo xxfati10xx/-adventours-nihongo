@@ -1,151 +1,103 @@
-import React, { useState, useMemo } from 'react';
-import { Brain, CheckCircle, XCircle, RotateCcw, Filter } from 'lucide-react';
-import { doc, setDoc, updateDoc, increment } from 'firebase/firestore';
-import { db, appId } from '@/lib/firebase';
+import React, { useState } from 'react';
+import { Brain, Star, ChevronRight, BookOpen, Layers } from 'lucide-react';
 
 const Flashcards = ({ user, dictionary, userProgress, isDarkMode, userStats }) => {
-  const [selectedCategory, setSelectedCategory] = useState('Todas');
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [sessionComplete, setSessionComplete] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
 
-  const categories = useMemo(() => {
-    const cats = new Set(dictionary.map(item => item.tipo || item.categoria));
-    return ['Todas', ...Array.from(cats)].filter(Boolean).sort();
-  }, [dictionary]);
+  // Take 10 cards for daily session
+  const sessionCards = dictionary.slice(0, 10);
+  const currentCard = sessionCards[currentIdx];
 
-  const dailyCards = useMemo(() => {
-    let pool = dictionary;
-    if (selectedCategory !== 'Todas') {
-      pool = dictionary.filter(d => (d.tipo === selectedCategory || d.categoria === selectedCategory));
-    }
-
-    // Basic SRS Logic: Sort by difficulty and last seen (simplified for now)
-    // In a real app, we'd calculate a 'nextReview' date.
-    const sorted = [...pool].sort((a, b) => {
-      const progA = userProgress[a.romaji] || { level: 0 };
-      const progB = userProgress[b.romaji] || { level: 0 };
-      return progA.level - progB.level;
-    });
-
-    return sorted.slice(0, 10);
-  }, [dictionary, selectedCategory, userProgress]);
-
-  const handleLevelUpdate = async (word, ease) => {
-    if (!user) return;
-    const currentProgress = userProgress[word] || { level: 0, count: 0 };
-    let newLevel = currentProgress.level;
-
-    if (ease === 'easy') newLevel += 1;
-    if (ease === 'hard') newLevel = Math.max(0, newLevel - 1);
-
-    const wordId = word.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-    await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'progress', wordId), {
-      level: newLevel,
-      lastSeen: new Date().toISOString(),
-      count: (currentProgress.count || 0) + 1
-    });
-
-    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
-    await updateDoc(userDocRef, {
-      xp: increment(5),
-      lastActivity: new Date().toISOString()
-    });
-
-    if (currentCardIndex < dailyCards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-      setShowAnswer(false);
+  const handleNext = () => {
+    setIsFlipped(false);
+    if (currentIdx < sessionCards.length - 1) {
+      setTimeout(() => setCurrentIdx(currentIdx + 1), 200);
     } else {
-      setSessionComplete(true);
+      setIsComplete(true);
     }
   };
 
-  const resetSession = () => {
-    setCurrentCardIndex(0);
-    setShowAnswer(false);
-    setSessionComplete(false);
-  };
-
-  if (dailyCards.length === 0) {
+  if (isComplete) {
     return (
-      <div className="text-center py-20 opacity-50">
-        <p className="font-bold">No hay palabras disponibles en esta categoría.</p>
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center p-8 animate-pop-in">
+        <div className={`p-12 rounded-[4rem] border-b-8 shadow-2xl relative overflow-hidden transition-all ${isDarkMode ? 'bg-[#242444] border-black' : 'bg-white border-[#F0EAD6]'}`}>
+          <div className="absolute top-0 right-0 w-40 h-40 -mr-20 -mt-20 bg-jp-sun opacity-10 rounded-full" />
+          <Star className={isDarkMode ? 'text-jp-sun' : 'text-yellow-400'} size={80} fill="currentColor" className="mx-auto mb-6 animate-float" />
+          <h3 className="text-4xl font-black uppercase tracking-tighter italic mb-4">¡Sesión Completada!</h3>
+          <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-8 leading-relaxed">Has fortalecido tu espíritu guerrero. +50 XP Ganados.</p>
+          <button
+            onClick={() => { setIsComplete(false); setCurrentIdx(0); }}
+            className="px-12 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all active:scale-95 btn-bubble-red shadow-xl"
+          >
+            Volver a Entrenar
+          </button>
+        </div>
       </div>
     );
   }
-
-  if (sessionComplete) {
-    return (
-      <div className={`p-8 rounded-[2rem] border-2 text-center space-y-6 animate-fade-in ${isDarkMode ? 'bg-[#1A1A1A] border-[#D4AF37]' : 'bg-white border-[#BC2424]'}`}>
-        <Brain size={64} className={`mx-auto ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`} />
-        <h2 className="text-2xl font-black uppercase">¡Sesión Completada!</h2>
-        <p className="font-bold">Has repasado 10 palabras hoy. Tu camino hacia la maestría continúa.</p>
-        <button
-          onClick={resetSession}
-          className={`px-8 py-3 rounded-full font-black uppercase tracking-widest transition-all border-2 ${isDarkMode ? 'bg-[#D4AF37] text-black border-white' : 'bg-[#BC2424] text-white border-[#8B1A1A]'}`}
-        >
-          Repetir Sesión
-        </button>
-      </div>
-    );
-  }
-
-  const currentCard = dailyCards[currentCardIndex];
 
   return (
-    <section className={`p-4 md:p-8 rounded-[2rem] border-2 flex flex-col min-h-[60vh] animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-lg'}`}>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className={`text-xs font-black uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Entrenamiento Flashcards</h2>
-        <div className="relative">
-          <select
-            className={`p-2 pl-8 rounded-full outline-none font-bold text-[10px] border-2 appearance-none cursor-pointer transition-all ${isDarkMode ? 'bg-[#2D2D2D] border-[#3D3D3D] text-white' : 'bg-[#FAF7F2] border-slate-100 text-[#2C3E50]'}`}
-            value={selectedCategory}
-            onChange={e => { setSelectedCategory(e.target.value); resetSession(); }}
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-          <Filter className="absolute left-2.5 top-2.5 text-slate-400" size={12} />
+    <section className="animate-pop-in space-y-8">
+      <div className="flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-jp-sun text-black shadow-lg' : 'bg-jp-purple text-white shadow-md'}`}>
+            <Brain size={24} />
+          </div>
+          <div>
+            <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-ink'}`}>Sesión Diaria</h2>
+            <p className="text-[10px] font-black uppercase opacity-60 tracking-[0.2em]">{currentIdx + 1} de {sessionCards.length}</p>
+          </div>
+        </div>
+
+        <div className="w-48 h-3 bg-slate-200 rounded-full overflow-hidden shadow-inner border-b-2 border-slate-300/50">
+          <div
+            className={`h-full transition-all duration-500 ${isDarkMode ? 'bg-jp-sun' : 'bg-jp-purple'}`}
+            style={{ width: `${((currentIdx + 1) / sessionCards.length) * 100}%` }}
+          />
         </div>
       </div>
 
-      <div className="mb-4 flex justify-between items-center px-2">
-        <span className="text-[10px] font-black opacity-50 uppercase">Progreso: {currentCardIndex + 1} / {dailyCards.length}</span>
-        <div className="flex gap-1">
-          {dailyCards.map((_, i) => (
-            <div key={i} className={`w-2 h-2 rounded-full ${i <= currentCardIndex ? (isDarkMode ? 'bg-[#D4AF37]' : 'bg-[#BC2424]') : 'bg-gray-200'}`} />
-          ))}
+      <div className="perspective-1000 w-full h-[450px] cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+        <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+
+          {/* Front: Spanish */}
+          <div className={`absolute inset-0 backface-hidden card-bubble flex flex-col items-center justify-center p-12 text-center transition-all ${isDarkMode ? 'bg-[#242444] border-black text-white shadow-[0_12px_0_#000]' : 'bg-white border-slate-100 shadow-[0_12px_0_#F0F0F0] text-jp-ink'}`}>
+            <BookOpen className={isDarkMode ? 'text-jp-sun opacity-20' : 'text-jp-purple opacity-20'} size={120} />
+            <span className={`text-[11px] font-black uppercase tracking-[0.5em] mb-4 opacity-60 ${isDarkMode ? 'text-jp-sun' : 'text-jp-purple-dark'}`}>Significado</span>
+            <h3 className="text-5xl md:text-7xl font-black tracking-tighter lowercase leading-none">{currentCard?.esp}</h3>
+            <p className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Toca para revelar</p>
+          </div>
+
+          {/* Back: Romaji */}
+          <div className={`absolute inset-0 backface-hidden rotate-y-180 card-bubble flex flex-col items-center justify-center p-12 text-center transition-all ${isDarkMode ? 'bg-jp-sun border-jp-sun-dark shadow-[0_12px_0_#E6B800] text-black' : 'bg-jp-purple border-jp-purple-dark shadow-[0_12px_0_#D9B3FF] text-white'}`}>
+            <Star className="opacity-20 absolute top-10 right-10 animate-spin-slow" size={60} />
+            <span className={`text-[11px] font-black uppercase tracking-[0.5em] mb-4 opacity-70`}>Lectura Romaji</span>
+            <h3 className="text-6xl md:text-8xl font-black tracking-tighter italic leading-none">{currentCard?.romaji || "—"}</h3>
+            <div className="mt-8 p-4 rounded-3xl bg-white/20 backdrop-blur-sm border-b-2 border-white/30">
+              <p className="text-sm font-black uppercase tracking-widest">{currentCard?.tipo || 'General'}</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <div
-        onClick={() => !showAnswer && setShowAnswer(true)}
-        className={`flex-1 flex flex-col items-center justify-center p-8 rounded-3xl border-4 border-dashed cursor-pointer transition-all transform active:scale-95 ${showAnswer ? 'border-transparent' : (isDarkMode ? 'border-[#3D3D3D] hover:border-[#D4AF37]' : 'border-slate-100 hover:border-[#BC2424]')}`}
-      >
-        <span className={`text-[10px] font-black uppercase mb-4 tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{currentCard.tipo || 'Vocabulario'}</span>
-        <h3 className="text-4xl md:text-6xl font-black mb-8 text-center">{showAnswer ? currentCard.romaji : currentCard.esp}</h3>
-        {!showAnswer && (
-          <p className="text-[10px] font-black uppercase opacity-30 animate-pulse">Toca para revelar</p>
-        )}
+      <div className="flex gap-4">
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsFlipped(!isFlipped); }}
+          className={`flex-1 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all active:scale-95 border-b-8 ${isDarkMode ? 'bg-[#242444] border-black text-white' : 'bg-white border-slate-100 text-slate-400 shadow-lg'}`}
+        >
+          {isFlipped ? 'Ver Significado' : 'Revelar'}
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); handleNext(); }}
+          className="flex-1 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all active:scale-95 btn-bubble-mint shadow-xl"
+        >
+          Siguiente Palabra
+          <ChevronRight size={20} className="inline-block ml-2" />
+        </button>
       </div>
-
-      {showAnswer && (
-        <div className="mt-8 grid grid-cols-2 gap-4 animate-fade-in-up">
-          <button
-            onClick={() => handleLevelUpdate(currentCard.romaji, 'hard')}
-            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 font-black uppercase tracking-widest transition-all ${isDarkMode ? 'bg-red-900/20 border-red-900 text-red-400 hover:bg-red-900/40' : 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'}`}
-          >
-            <XCircle size={20} /> Difícil
-          </button>
-          <button
-            onClick={() => handleLevelUpdate(currentCard.romaji, 'easy')}
-            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border-2 font-black uppercase tracking-widest transition-all ${isDarkMode ? 'bg-green-900/20 border-green-900 text-green-400 hover:bg-green-900/40' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'}`}
-          >
-            <CheckCircle size={20} /> Fácil
-          </button>
-        </div>
-      )}
     </section>
   );
 };

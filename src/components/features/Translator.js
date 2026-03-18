@@ -1,92 +1,91 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Info, Zap } from 'lucide-react';
+import { Info, Zap, Save, ChevronRight } from 'lucide-react';
 import { SakuraIcon } from '../icons/JapaneseIcons';
 
 const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }) => {
-  return (
-    <section className={`p-4 md:p-8 rounded-[2rem] border-2 theme-transition animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-md'}`}>
-      <textarea
-        className={`w-full p-4 md:p-6 rounded-2xl mb-6 outline-none transition-all text-xl md:text-3xl font-medium shadow-inner min-h-[120px] ${isDarkMode ? 'bg-[#121212] border-[#2D2D2D] text-white focus:border-[#D4AF37]' : 'bg-[#FAF7F2] border-slate-100 text-[#2C3E50] focus:border-[#BC2424]'}`}
-        value={inputText}
-        onChange={(e) => setInputText(e.target.value)}
-        placeholder="Introduce tu frase..."
-      />
+  const [isSuccess, setIsSuccess] = useState(false);
 
-      <div
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-        className={`p-6 md:p-10 rounded-3xl text-center mb-6 border-2 shadow-xl relative overflow-hidden transition-colors ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37]' : 'bg-gradient-to-br from-[#FAF7F2] to-[#F3EEE5] border-[#E8DCC4]'} ${placedItems.length === expectedOrder.length && expectedOrder.length > 0 ? 'kintsugi-glow' : ''}`}
-      >
-        <div className={`absolute top-4 right-4 opacity-10 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}><SakuraIcon size={40}/></div>
-        <p className={`text-[10px] font-black uppercase mb-2 tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Resultado Japonés</p>
-        <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight">{result.oracion || "..."}</p>
+  const handleSave = () => {
+    saveHistory(inputText, result.oracion, result.uniqueRules);
+    setIsSuccess(true);
+    setTimeout(() => setIsSuccess(false), 2000);
+  };
+
+  return (
+    <div className="space-y-6 animate-pop-in">
+      <section className={`p-6 md:p-8 card-bubble relative overflow-hidden ${isDarkMode ? 'bg-[#242444]' : 'bg-white'}`}>
+        <div className={`absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 rounded-full opacity-10 ${isDarkMode ? 'bg-jp-sun' : 'bg-jp-red'}`} />
+
+        <label className={`block text-[10px] font-black uppercase tracking-[0.2em] mb-3 ml-2 ${isDarkMode ? 'text-jp-sun' : 'text-jp-red'}`}>Ingresa tu frase:</label>
+        <textarea
+          className={`w-full p-6 rounded-[2rem] outline-none transition-all text-xl md:text-3xl font-black shadow-inner min-h-[140px] border-b-8 ${
+            isDarkMode
+              ? 'bg-[#1A1A2E] border-[#000] text-white focus:border-jp-sun'
+              : 'bg-jp-sky-light border-jp-sky text-jp-ink focus:border-jp-red'
+          }`}
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Escribe aquí..."
+        />
+      </section>
+
+      <div className={`p-8 md:p-12 card-bubble text-center relative overflow-hidden transition-all ${
+        isDarkMode
+          ? 'bg-[#242444] border-jp-sun text-white'
+          : 'bg-white border-jp-red text-jp-ink shadow-[0_12px_0_#FFB3B3]'
+      }`}>
+        <div className={`absolute -top-4 -left-4 opacity-10 animate-float ${isDarkMode ? 'text-jp-sun' : 'text-jp-red'}`}><SakuraIcon size={80}/></div>
+
+        <p className={`text-[10px] font-black uppercase mb-4 tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-red'}`}>Tu Traducción</p>
+        <p className="text-3xl md:text-6xl font-black tracking-tighter leading-tight drop-shadow-sm">{result.oracion || "..."}</p>
+
         {result.oracion && (
           <button
-            onClick={() => saveHistory(inputText, result.oracion, result.uniqueRules)}
-            className={`mt-4 px-4 py-1 rounded-full text-[8px] font-black uppercase border-2 transition-all ${isDarkMode ? 'bg-[#121212] border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black' : 'bg-white border-[#BC2424] text-[#BC2424] hover:bg-[#BC2424] hover:text-white'}`}
+            onClick={handleSave}
+            className={`mt-8 px-8 py-3 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 mx-auto transition-all active:scale-95 ${
+              isSuccess
+                ? 'btn-bubble-mint'
+                : 'btn-bubble-red'
+            }`}
           >
-            Guardar en Historial (+10 XP)
+            {isSuccess ? '¡Guardado!' : 'Guardar Progreso'}
+            <Save size={16} />
           </button>
         )}
       </div>
 
-      {puzzleItems.length > 0 && placedItems.length < expectedOrder.length && (
-        <div className="mb-8 p-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía:</p>
-           <div className="flex flex-wrap justify-center gap-3">
-             {puzzleItems
-               .filter(item => !placedItems.includes(item.romaji))
-               .map((item, idx) => (
-               <div
-                 key={idx}
-                 draggable
-                 onDragStart={() => setDraggedItem(item)}
-                 className={`px-4 py-2 rounded-xl border-2 cursor-grab active:cursor-grabbing font-black text-sm transition-all shadow-sm ${errorIndex === idx ? 'vibrate-red' : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] text-white hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')}`}
-               >
-                 {item.romaji}
-               </div>
-             ))}
-           </div>
-        </div>
-      )}
-
       {result.uniqueRules.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <p className={`text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}><Info size={16}/> Análisis Gramatical:</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {result.uniqueRules.map((rule, idx) => (
-              <div key={idx} className={`p-4 rounded-xl flex items-center gap-4 shadow-md border-l-4 transition-colors ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37]' : 'bg-[#FAF7F2] border-[#BC2424]'}`}>
-                <Zap size={16} className={isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}/>
-                <div className="text-left">
-                  <p className={`text-[12px] font-black leading-tight mb-0.5 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#2C3E50]'}`}>{rule.title}</p>
-                  <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">{rule.desc}</p>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {result.uniqueRules.map((rule, idx) => (
+            <div key={idx} className={`p-5 rounded-[2rem] flex items-center gap-4 card-bubble transition-colors ${isDarkMode ? 'bg-[#242444] border-[#3D3D5C]' : 'bg-jp-sun-light border-jp-sun'}`}>
+              <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-[#1A1A2E]' : 'bg-white'}`}>
+                <Zap size={20} className={isDarkMode ? 'text-jp-sun' : 'text-yellow-500'}/>
               </div>
-            ))}
-          </div>
+              <div className="text-left">
+                <p className={`text-sm font-black uppercase leading-tight ${isDarkMode ? 'text-jp-sun' : 'text-jp-ink'}`}>{rule.title}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{rule.desc}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 justify-center">
+      <div className="flex flex-wrap gap-4 justify-center py-4">
         {result.desglose.map((item, i) => (
-          <div key={i} className={`p-4 rounded-2xl border-2 flex flex-col items-center min-w-[100px] flex-1 transition-all transform hover:scale-105 shadow-sm ${
+          <div key={i} className={`p-5 rounded-[2rem] border-b-4 flex flex-col items-center min-w-[120px] flex-1 transition-all transform hover:-translate-y-2 shadow-xl ${
             item.status === 'missing'
-              ? (isDarkMode ? 'bg-red-900/20 border-red-900' : 'bg-rose-50 border-rose-100')
+              ? 'bg-rose-100 border-rose-300 text-rose-800'
               : item.isTechnical
-                ? (isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37] ring-1 ring-[#D4AF37]' : 'bg-[#FFF9E6] border-[#D4AF37] ring-1 ring-[#D4AF37]')
-                : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')
+                ? 'bg-jp-purple-light border-jp-purple text-jp-ink'
+                : 'bg-white border-jp-sky text-jp-ink'
           }`}>
-            <div className="flex items-center gap-1 mb-1">
-              {item.isTechnical && <Zap size={10} className={isDarkMode ? 'text-[#D4AF37]' : 'text-[#B8860B]'} />}
-              <span className={`text-[8px] font-black uppercase tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(item.tipo || 'DESCONOCIDO')}</span>
-            </div>
-            <span className="font-black text-lg md:text-xl">{item.romaji === "" ? "—" : String(item.romaji || "???")}</span>
-            <span className="text-[10px] text-gray-400 font-bold italic text-center mt-1">{String(item.esp)}</span>
-            {item.isTechnical && <span className={`text-[7px] font-black uppercase mt-1 px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-[#D4AF37] text-black' : 'bg-[#D4AF37] text-white'}`}>Técnico</span>}
+            <span className={`text-[9px] font-black uppercase tracking-widest mb-2 opacity-60`}>{String(item.tipo || 'DESCONOCIDO')}</span>
+            <span className="font-black text-2xl mb-1">{item.romaji === "" ? "—" : String(item.romaji || "???")}</span>
+            <span className="text-[11px] font-bold text-slate-400 italic text-center">{String(item.esp)}</span>
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 };
 

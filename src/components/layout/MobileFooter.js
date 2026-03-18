@@ -3,26 +3,33 @@ import { ArrowRightLeft, MessageCircle, BookA, Layers, Brain, History, Trophy } 
 
 const MobileFooter = ({ activeTab, setActiveTab, isDarkMode }) => {
   const tabs = [
-    { id: 'inicio', Icon: ArrowRightLeft, label: 'Traductor' },
-    { id: 'chat', Icon: MessageCircle, label: 'Maestro' },
-    { id: 'diccionario', Icon: BookA, label: 'Librería' },
-    { id: 'flashcards', Icon: Brain, label: 'Estudio' },
-    { id: 'gramatica', Icon: Layers, label: 'Manual' },
-    { id: 'bushido', Icon: Trophy, label: 'Bushido' },
-    { id: 'historial', Icon: History, label: 'Radio' }
+    { id: 'inicio', Icon: ArrowRightLeft, label: 'Traductor', color: 'bg-jp-red' },
+    { id: 'chat', Icon: MessageCircle, label: 'Maestro', color: 'bg-jp-sky' },
+    { id: 'diccionario', Icon: BookA, label: 'Librería', color: 'bg-jp-mint' },
+    { id: 'flashcards', Icon: Brain, label: 'Estudio', color: 'bg-jp-purple' },
+    { id: 'gramatica', Icon: Layers, label: 'Manual', color: 'bg-jp-sun' },
+    { id: 'bushido', Icon: Trophy, label: 'Bushido', color: 'bg-orange-400' },
+    { id: 'historial', Icon: History, label: 'Radio', color: 'bg-slate-400' }
   ];
 
   return (
-    <footer className={`fixed bottom-0 w-full border-t-4 p-2 pb-6 flex overflow-x-auto custom-scrollbar-hide md:hidden z-50 shadow-2xl rounded-t-[2.5rem] transition-colors ${isDarkMode ? 'bg-[#1A1A1A] border-[#D4AF37]' : 'bg-[#FAF7F2] border-[#BC2424]'}`}>
-      <div className="flex min-w-full justify-around px-2">
+    <footer className={`fixed bottom-4 left-4 right-4 md:hidden z-50`}>
+      <div className={`flex overflow-x-auto no-scrollbar gap-2 p-3 rounded-[2.5rem] border-b-8 shadow-2xl transition-all ${isDarkMode ? 'bg-[#242444] border-[#1A1A2E]' : 'bg-white border-[#F0EAD6]'}`}>
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`p-3 min-w-[70px] rounded-2xl transition-all active:scale-90 flex flex-col items-center gap-1 ${activeTab === t.id ? (isDarkMode ? 'text-black bg-[#D4AF37] shadow-xl' : 'text-[#FAF7F2] bg-[#BC2424] shadow-lg') : 'text-gray-400 opacity-60'}`}
+            className={`flex-shrink-0 min-w-[80px] p-3 rounded-[2rem] transition-all active:scale-95 flex flex-col items-center gap-1 relative overflow-hidden ${
+              activeTab === t.id
+                ? `${t.color} text-white border-b-4 border-black/20 shadow-lg`
+                : 'bg-transparent text-slate-400'
+            }`}
           >
-            <t.Icon size={20} />
-            <span className="text-[8px] font-bold uppercase tracking-tighter whitespace-nowrap">{t.label}</span>
+            <t.Icon size={22} className={activeTab === t.id ? 'animate-bounce' : ''} />
+            <span className="text-[9px] font-black uppercase tracking-tighter">{t.label}</span>
+            {activeTab === t.id && (
+              <div className="absolute top-0 right-0 w-4 h-4 bg-white/20 rounded-full -mr-1 -mt-1" />
+            )}
           </button>
         ))}
       </div>
