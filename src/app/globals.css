@@ -1,19 +1,40 @@
 @import "tailwindcss";
 
 @theme {
-  --color-japanese-red: #BC2424;
-  --color-japanese-gold: #D4AF37;
+  --color-jp-red-light: #FFB3B3;
+  --color-jp-red: #FF8080;
+  --color-jp-red-dark: #FF4D4D;
+
+  --color-jp-mint-light: #E0FFF0;
+  --color-jp-mint: #B3FFCC;
+  --color-jp-mint-dark: #80FFB3;
+
+  --color-jp-sky-light: #E6F3FF;
+  --color-jp-sky: #B3D9FF;
+  --color-jp-sky-dark: #80BFFF;
+
+  --color-jp-sun-light: #FFFFE0;
+  --color-jp-sun: #FFFFB3;
+  --color-jp-sun-dark: #FFFF80;
+
+  --color-jp-purple-light: #F2E6FF;
+  --color-jp-purple: #E6CCFF;
+  --color-jp-purple-dark: #D9B3FF;
+
   --color-japanese-paper: #FAF7F2;
   --color-japanese-ink: #2C3E50;
+
+  --radius-bubble: 2rem;
+  --radius-bubble-sm: 1rem;
 }
 
 :root {
-  --japanese-red: #BC2424;
-  --japanese-gold: #D4AF37;
+  --japanese-red: #FF8080;
+  --japanese-red-shadow: #E66666;
   --japanese-paper: #FAF7F2;
   --japanese-ink: #2C3E50;
-  --dark-bg: #121212;
-  --dark-surface: #1A1A1A;
+  --dark-bg: #1A1A2E;
+  --dark-surface: #242444;
 }
 
 body {
@@ -21,18 +42,69 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* 3D Bubble Button Utility */
+.btn-bubble-red {
+  background-color: #FF8080;
+  border-bottom: 4px solid #E66666;
+  color: white;
+  transition: all 0.1s ease;
+}
+.btn-bubble-red:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+  margin-bottom: 2px;
+}
+
+.btn-bubble-mint {
+  background-color: #B3FFCC;
+  border-bottom: 4px solid #80FFB3;
+  color: #1B4D3E;
+  transition: all 0.1s ease;
+}
+.btn-bubble-mint:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+  margin-bottom: 2px;
+}
+
+.btn-bubble-sky {
+  background-color: #B3D9FF;
+  border-bottom: 4px solid #80BFFF;
+  color: #1A3A5A;
+  transition: all 0.1s ease;
+}
+.btn-bubble-sky:active {
+  transform: translateY(2px);
+  border-bottom-width: 2px;
+  margin-bottom: 2px;
+}
+
+/* Card Style */
+.card-bubble {
+  border-radius: 2rem;
+  border: 3px solid #F0EAD6;
+  box-shadow: 0 8px 0 #F0EAD6;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.dark .card-bubble {
+  border-color: #3D3D5C;
+  box-shadow: 0 8px 0 #3D3D5C;
+  background-color: #242444;
+}
+
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--color-slate-200);
+  background-color: #E8DCC4;
   border-radius: 9999px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-red-400);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
 .custom-scrollbar-hide::-webkit-scrollbar {
@@ -43,51 +115,35 @@ body {
   scrollbar-width: none;
 }
 
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--color-neutral-800);
-}
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-amber-500);
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 /* Animations */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes pop-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out forwards;
+.animate-pop-in {
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
-/* Sakura Rain */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Sakura Rain (Updated for playfulness) */
 @keyframes sakura-fall {
   0% {
     transform: translateY(-10vh) translateX(0) rotate(0deg);
     opacity: 0;
   }
-  10% {
-    opacity: 0.8;
-  }
-  90% {
-    opacity: 0.8;
-  }
+  20% { opacity: 1; }
   100% {
-    transform: translateY(110vh) translateX(100px) rotate(360deg);
+    transform: translateY(110vh) translateX(100px) rotate(720deg);
     opacity: 0;
   }
 }
@@ -97,9 +153,21 @@ body {
   top: -10vh;
   pointer-events: none;
   z-index: 1;
-  background: linear-gradient(to bottom right, #fff1f2, #fecdd3);
+  background: linear-gradient(to bottom right, #FFB3B3, #FFD9D9);
   border-radius: 100% 0% 100% 0% / 100% 0% 100% 0%;
-  box-shadow: 0 0 5px rgba(255, 182, 193, 0.3);
+}
+
+/* Victory Explosion */
+@keyframes victory-confetti {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.victory-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: victory-confetti 0.6s ease-out forwards;
 }
 
 /* 3D Flip Card */
@@ -115,85 +183,45 @@ body {
   backface-visibility: hidden;
 }
 
-.rotate-y-180 {
-  transform: rotateY(180deg);
+/* Theme Transition */
+.theme-transition {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Mascot Bounce */
+@keyframes mascot-bounce {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-5px) rotate(5deg); }
+}
+
+.mascot-anim {
+  animation: mascot-bounce 2s ease-in-out infinite;
 }
 
 /* Hanko Stamp */
 .hanko-stamp {
-  width: 70px;
-  height: 70px;
-  border: 4px solid #BC2424;
-  color: #BC2424;
+  width: 80px;
+  height: 80px;
+  border: 6px solid #FF8080;
+  color: #FF8080;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: 1.2rem;
-  background: rgba(250, 247, 242, 0.9);
-  box-shadow: inset 0 0 10px rgba(188, 36, 36, 0.2);
+  font-size: 1.4rem;
+  background: white;
+  box-shadow: 0 10px 0 #FFB3B3;
   text-transform: uppercase;
-  letter-spacing: -1px;
+  transform: rotate(-15deg);
 }
 
 @keyframes stampImpact {
-  0% {
-    transform: scale(3);
-    opacity: 0;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { transform: scale(3) rotate(-40deg); opacity: 0; }
+  60% { transform: scale(0.9) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-15deg); opacity: 1; }
 }
 
 .animate-hanko {
-  animation: stampImpact 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
-}
-
-/* Micro-interactions */
-.active-press:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-}
-
-/* Theme Transition */
-.theme-transition {
-  transition: background-color 0.8s ease, color 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease;
-}
-
-/* Kintsugi Glow */
-.kintsugi-glow {
-  box-shadow: 0 0 15px #D4AF37, inset 0 0 5px #D4AF37;
-  border-color: #D4AF37 !important;
-  animation: pulse-gold 2s infinite;
-}
-
-@keyframes pulse-gold {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
-}
-
-.vibrate-red {
-  animation: vibrate 0.3s linear;
-  border-color: #EF4444 !important;
-}
-
-@keyframes vibrate {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(5px); }
-  50% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-  100% { transform: translateX(0); }
-}
-
-/* Touch targets */
-button, a, input, select, textarea {
-  min-height: 44px;
+  animation: stampImpact 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }

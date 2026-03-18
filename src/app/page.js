@@ -6,6 +6,7 @@ import { auth, db, appId, MASTER_SEED } from '@/lib/firebase';
 
 import Header from '@/components/layout/Header';
 import MobileFooter from '@/components/layout/MobileFooter';
+import Mascot from '@/components/layout/Mascot';
 import Translator from '@/components/features/Translator';
 import Chat from '@/components/features/Chat';
 import Dictionary from '@/components/features/Dictionary';
@@ -121,6 +122,8 @@ export default function App() {
         console.error("Error sincronizando datos:", err);
       }
     };
+
+    if (!user) return;
 
     const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
     const progressRef = collection(db, 'artifacts', appId, 'users', user.uid, 'progress');
@@ -342,10 +345,12 @@ export default function App() {
           stream: false
         })
       });
-      if (!resp.ok) throw new Error("DeepSeek Error");
-      const data = await resp.json();
+      if (!response.ok) throw new Error("DeepSeek Error");
+      const data = await response.json();
       return data.choices?.[0]?.message?.content;
-    };
+    } catch (e) {
+      console.warn("Direct DeepSeek fallback failed", e);
+    }
 
     try {
       let aiResponse;
@@ -402,16 +407,23 @@ export default function App() {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  const petals = useMemo(() => {
-    return [...Array(15)].map((_, i) => ({
+  const [petals, setPetals] = useState([]);
+  useEffect(() => {
+    setPetals([...Array(15)].map((_, i) => ({
       id: i,
       left: Math.random() * 100,
       width: Math.random() * 10 + 5,
       height: Math.random() * 8 + 4,
       duration: Math.random() * 10 + 10,
       delay: Math.random() * 10
-    }));
+    })));
   }, []);
+
+  const triggerHanko = (text) => {
+    setHankoText(text);
+    setHankoVisible(true);
+    setTimeout(() => setHankoVisible(false), 3000);
+  };
 
   useEffect(() => {
     if (result.oracion && result.oracion.length > 5 && !result.oracion.includes('?')) {
@@ -441,15 +453,17 @@ export default function App() {
       <div className={`fixed inset-0 pointer-events-none z-0 transition-opacity duration-700 ${isDarkMode ? 'opacity-[0.05]' : 'opacity-[0.03]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 50 C 0 25, 25 0, 50 0 C 75 0, 100 25, 100 50 C 100 75, 75 100, 50 100 C 25 100, 0 75, 0 50 Z M 10 50 C 10 70, 30 90, 50 90 C 70 90, 90 70, 90 50 C 90 30, 70 10, 50 10 C 30 10, 10 30, 10 50 Z' fill='${isDarkMode ? '%23D4AF37' : '%23bc2424'}' /%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }}></div>
 
       {hankoVisible && (
-        <div className="fixed top-24 right-8 z-[100] animate-hanko">
-          <div className="hanko-stamp flex flex-col items-center">
-            <span className="text-[10px] leading-tight">MAESTRO</span>
-            <span>{hankoText}</span>
+        <div className="fixed top-32 right-8 z-[100] animate-hanko pointer-events-none">
+          <div className="hanko-stamp flex flex-col items-center justify-center">
+            <span className="text-[10px] leading-none mb-1 opacity-60">SENSEI</span>
+            <span className="leading-none">{hankoText}</span>
           </div>
         </div>
       )}
 
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
+
+      <Mascot isDarkMode={isDarkMode} activeTab={activeTab} />
 
       <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
 
@@ -466,7 +480,11 @@ export default function App() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-3 px-6 py-2 rounded-full font-black text-[12px] uppercase tracking-widest transition-all border-2 ${activeTab === tab.id ? (isDarkMode ? 'bg-[#D4AF37] text-black border-white shadow-xl' : 'bg-[#BC2424] text-[#FAF7F2] border-[#8B1A1A] shadow-lg') : (isDarkMode ? 'bg-[#2D2D2D] text-gray-500 border-[#3D3D3D]' : 'bg-white text-slate-400 border-slate-100 hover:bg-[#FDFBF7]')}`}
+              className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border-b-4 ${
+                activeTab === tab.id
+                  ? (isDarkMode ? 'bg-jp-sun text-black border-black/20 shadow-lg' : 'bg-jp-red text-white border-jp-red-dark shadow-lg')
+                  : (isDarkMode ? 'bg-[#242444] text-slate-400 border-black' : 'bg-white text-slate-400 border-slate-100 hover:border-jp-red hover:text-jp-red')
+              }`}
             >
               <tab.Icon size={16} /> {tab.label}
             </button>
