@@ -45,10 +45,20 @@ const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }
 
       <div className="flex flex-wrap gap-3 justify-center">
         {result.desglose.map((item, i) => (
-          <div key={i} className={`p-4 rounded-2xl border-2 flex flex-col items-center min-w-[100px] flex-1 transition-all transform hover:scale-105 shadow-sm ${item.status === 'missing' ? (isDarkMode ? 'bg-red-900/20 border-red-900' : 'bg-rose-50 border-rose-100') : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')}`}>
-            <span className={`text-[8px] font-black uppercase mb-1 tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(item.tipo || 'DESCONOCIDO')}</span>
+          <div key={i} className={`p-4 rounded-2xl border-2 flex flex-col items-center min-w-[100px] flex-1 transition-all transform hover:scale-105 shadow-sm ${
+            item.status === 'missing'
+              ? (isDarkMode ? 'bg-red-900/20 border-red-900' : 'bg-rose-50 border-rose-100')
+              : item.isTechnical
+                ? (isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37] ring-1 ring-[#D4AF37]' : 'bg-[#FFF9E6] border-[#D4AF37] ring-1 ring-[#D4AF37]')
+                : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')
+          }`}>
+            <div className="flex items-center gap-1 mb-1">
+              {item.isTechnical && <Zap size={10} className={isDarkMode ? 'text-[#D4AF37]' : 'text-[#B8860B]'} />}
+              <span className={`text-[8px] font-black uppercase tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(item.tipo || 'DESCONOCIDO')}</span>
+            </div>
             <span className="font-black text-lg md:text-xl">{item.romaji === "" ? "—" : String(item.romaji || "???")}</span>
             <span className="text-[10px] text-gray-400 font-bold italic text-center mt-1">{String(item.esp)}</span>
+            {item.isTechnical && <span className={`text-[7px] font-black uppercase mt-1 px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-[#D4AF37] text-black' : 'bg-[#D4AF37] text-white'}`}>Técnico</span>}
           </div>
         ))}
       </div>

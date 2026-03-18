@@ -18,6 +18,7 @@ export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : nul
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const appId = 'adventours-cr-nihongo';
+export const APP_VERSION = '1.0.1'; // Increment this to force cache refresh
 
 export const MASTER_SEED = {
   GRAMMAR: {

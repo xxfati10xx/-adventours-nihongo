@@ -52,33 +52,73 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    const vocabRef = collection(db, 'artifacts', appId, 'public', 'data', 'vocabulary');
-    const grammarRef = collection(db, 'artifacts', appId, 'public', 'data', 'grammar');
+    const initData = async () => {
+      // 1. Load from LocalStorage immediately for instant UX
+      const cachedVocab = localStorage.getItem('adventours_vocab');
+      const cachedGrammar = localStorage.getItem('adventours_grammar');
+      const cachedVersion = localStorage.getItem('adventours_version');
 
-    const unsubVocab = onSnapshot(vocabRef, (snapshot) => {
-      if (snapshot.empty) {
-        MASTER_SEED.VOCABULARY.forEach(item => {
-          const id = (item.romaji || item.esp).replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-          setDoc(doc(vocabRef, id || Math.random().toString(36).substr(2, 9)), item);
-        });
-        setDictionary(MASTER_SEED.VOCABULARY);
-      } else {
-        const data = snapshot.docs.map(doc => doc.data());
-        setDictionary(data);
-      }
-    });
+      if (cachedVocab) setDictionary(JSON.parse(cachedVocab));
+      if (cachedGrammar) setGrammarManual(JSON.parse(cachedGrammar));
 
-    const unsubGrammar = onSnapshot(grammarRef, (snapshot) => {
-      const data = {};
-      snapshot.docs.forEach(doc => { data[doc.id] = doc.data(); });
-      setGrammarManual(data);
-      if (snapshot.empty) {
-        Object.entries(MASTER_SEED.GRAMMAR).forEach(([key, val]) => {
-          setDoc(doc(grammarRef, key), val);
-        });
+      // 2. Wait for user auth before checking server
+      if (!user) return;
+
+      const metadataRef = doc(db, 'artifacts', appId, 'public', 'metadata');
+      const vocabRef = collection(db, 'artifacts', appId, 'public', 'data', 'vocabulary');
+      const grammarRef = collection(db, 'artifacts', appId, 'public', 'data', 'grammar');
+
+      try {
+        const metaSnap = await getDoc(metadataRef);
+        const serverVersion = metaSnap.exists() ? metaSnap.data().version : '0.0.0';
+
+        // 3. Compare versions using localStorage directly to avoid state lag
+        if (serverVersion !== cachedVersion || !cachedVocab) {
+          console.log("Sincronizando biblioteca con el servidor (Nueva versión detected o caché vacío)...");
+
+          const [vocabSnap, grammarSnap] = await Promise.all([
+            getDocs(vocabRef),
+            getDocs(grammarRef)
+          ]);
+
+          let finalVocab = [];
+          if (vocabSnap.empty) {
+            finalVocab = MASTER_SEED.VOCABULARY;
+            // Seed if empty (careful with 10k items, better in chunks/background)
+            MASTER_SEED.VOCABULARY.forEach(item => {
+              const id = (item.romaji || item.esp).replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+              setDoc(doc(vocabRef, id), item);
+            });
+          } else {
+            finalVocab = vocabSnap.docs.map(d => d.data());
+          }
+          setDictionary(finalVocab);
+          localStorage.setItem('adventours_vocab', JSON.stringify(finalVocab));
+
+          let finalGrammar = {};
+          if (grammarSnap.empty) {
+            finalGrammar = MASTER_SEED.GRAMMAR;
+            Object.entries(MASTER_SEED.GRAMMAR).forEach(([key, val]) => {
+              setDoc(doc(grammarRef, key), val);
+            });
+          } else {
+            grammarSnap.docs.forEach(d => { finalGrammar[d.id] = d.data(); });
+          }
+          setGrammarManual(finalGrammar);
+          localStorage.setItem('adventours_grammar', JSON.stringify(finalGrammar));
+
+          localStorage.setItem('adventours_version', serverVersion || APP_VERSION);
+
+          if (!metaSnap.exists()) {
+            await setDoc(metadataRef, { version: APP_VERSION, last_updated: new Date().toISOString() });
+          }
+        } else {
+          console.log("Biblioteca cargada localmente. Ahorro de lecturas Firebase: 100%.");
+        }
+      } catch (err) {
+        console.error("Error sincronizando datos:", err);
       }
-    });
+    };
 
     const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
     const progressRef = collection(db, 'artifacts', appId, 'users', user.uid, 'progress');
@@ -185,7 +225,10 @@ export default function App() {
       }
 
       if (match) {
-        const item = { ...match, status: 'found' };
+        const technicalTypes = ["Negocios", "Leyes", "Ingeniería", "Medicina", "Tecnología", "Ciencia"];
+        const isTechnical = technicalTypes.includes(match.tipo) || technicalTypes.includes(match.categoria);
+
+        const item = { ...match, status: 'found', isTechnical };
         desglose.push(item);
 
         if (match.categoria === "Verbos" || match.tipo === "Verbos") {
@@ -284,13 +327,15 @@ export default function App() {
     setChatInput('');
     setIsTyping(true);
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const deepseekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || "";
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
 
+    // Strategy: Try Gemini first, fallback to DeepSeek if available, finally Local Response
     try {
-      if (!apiKey) throw new Error("No API Key");
+      if (!geminiKey) throw new Error("No Gemini Key");
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -299,15 +344,44 @@ export default function App() {
         })
       });
 
-      if (!response.ok) throw new Error("API Error");
+      if (!response.ok) throw new Error("Gemini API Error");
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake, no he podido procesar tu consulta." }]);
-    } catch (e) {
-      const localMsg = generateLocalResponse(userMsg);
-      setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
+      setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake..." }]);
+    } catch (geminiError) {
+      console.warn("Gemini falló, intentando DeepSeek...", geminiError);
+
+      try {
+        if (!deepseekKey) throw new Error("No DeepSeek Key");
+
+        // Assuming DeepSeek Chat API (OpenAI compatible)
+        const response = await fetch("https://api.deepseek.com/chat/completions", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMsg }
+            ]
+          })
+        });
+
+        if (!response.ok) throw new Error("DeepSeek API Error");
+
+        const data = await response.json();
+        setMessages(prev => [...prev, { role: 'assistant', text: data.choices?.[0]?.message?.content || "Moushiwake..." }]);
+      } catch (deepseekError) {
+        console.warn("DeepSeek también falló o no está configurado. Usando motor local.", deepseekError);
+        const localMsg = generateLocalResponse(userMsg);
+        setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
+      }
+    } finally {
+      setIsTyping(false);
     }
-    finally { setIsTyping(false); }
   };
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
