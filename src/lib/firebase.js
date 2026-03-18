@@ -3,8 +3,16 @@ import { getAnalytics } from 'firebase/analytics';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+/**
+ * PRODUCTION NOTE:
+ * For production security (APK/Web), Vertex AI for Firebase uses the 'firebase/ai' SDK.
+ * This protects your API Key by routing requests through Firebase's backend.
+ * For maximum security, enable 'Firebase App Check' in the Firebase Console.
+ */
+import { getAI, getGenerativeModel, VertexAIBackend } from "firebase/ai";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDCDMIXn6ddA_RMLpN1_AgC4eVAQMl4ciw",
+  apiKey: "AIzaSyCIZ_D9h-ZJ0AueFinQXu4VxSpx1p68QP8",
   authDomain: "adventours-nihongo.firebaseapp.com",
   projectId: "adventours-nihongo",
   storageBucket: "adventours-nihongo.firebasestorage.app",
@@ -17,6 +25,9 @@ const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const ai = getAI(app, { backend: new VertexAIBackend() });
+export const generativeModel = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+export const generativeModelFallback = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 export const appId = 'adventours-cr-nihongo';
 export const APP_VERSION = '1.0.1'; // Increment this to force cache refresh
 

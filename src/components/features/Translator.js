@@ -4,7 +4,7 @@ import { SakuraIcon } from '../icons/JapaneseIcons';
 
 const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }) => {
   return (
-    <section className={`p-4 md:p-8 rounded-[2rem] border-2 transition-all animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-md'}`}>
+    <section className={`p-4 md:p-8 rounded-[2rem] border-2 theme-transition animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-md'}`}>
       <textarea
         className={`w-full p-4 md:p-6 rounded-2xl mb-6 outline-none transition-all text-xl md:text-3xl font-medium shadow-inner min-h-[120px] ${isDarkMode ? 'bg-[#121212] border-[#2D2D2D] text-white focus:border-[#D4AF37]' : 'bg-[#FAF7F2] border-slate-100 text-[#2C3E50] focus:border-[#BC2424]'}`}
         value={inputText}
@@ -12,7 +12,11 @@ const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }
         placeholder="Introduce tu frase..."
       />
 
-      <div className={`p-6 md:p-10 rounded-3xl text-center mb-6 border-2 shadow-xl relative overflow-hidden transition-colors ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37]' : 'bg-gradient-to-br from-[#FAF7F2] to-[#F3EEE5] border-[#E8DCC4]'}`}>
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDrop}
+        className={`p-6 md:p-10 rounded-3xl text-center mb-6 border-2 shadow-xl relative overflow-hidden transition-colors ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37]' : 'bg-gradient-to-br from-[#FAF7F2] to-[#F3EEE5] border-[#E8DCC4]'} ${placedItems.length === expectedOrder.length && expectedOrder.length > 0 ? 'kintsugi-glow' : ''}`}
+      >
         <div className={`absolute top-4 right-4 opacity-10 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}><SakuraIcon size={40}/></div>
         <p className={`text-[10px] font-black uppercase mb-2 tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Resultado Japonés</p>
         <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight">{result.oracion || "..."}</p>
@@ -25,6 +29,26 @@ const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }
           </button>
         )}
       </div>
+
+      {puzzleItems.length > 0 && placedItems.length < expectedOrder.length && (
+        <div className="mb-8 p-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
+           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía:</p>
+           <div className="flex flex-wrap justify-center gap-3">
+             {puzzleItems
+               .filter(item => !placedItems.includes(item.romaji))
+               .map((item, idx) => (
+               <div
+                 key={idx}
+                 draggable
+                 onDragStart={() => setDraggedItem(item)}
+                 className={`px-4 py-2 rounded-xl border-2 cursor-grab active:cursor-grabbing font-black text-sm transition-all shadow-sm ${errorIndex === idx ? 'vibrate-red' : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] text-white hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')}`}
+               >
+                 {item.romaji}
+               </div>
+             ))}
+           </div>
+        </div>
+      )}
 
       {result.uniqueRules.length > 0 && (
         <div className="mb-6 space-y-3">

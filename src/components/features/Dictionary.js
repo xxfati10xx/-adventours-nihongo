@@ -11,13 +11,14 @@ const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
         <input
           type="text"
           placeholder="Buscar concepto..."
-          className={`w-full p-3 pl-10 rounded-full outline-none font-bold text-sm shadow-inner border-2 transition-all ${isDarkMode ? 'bg-[#2D2D2D] border-[#3D3D3D] text-white focus:border-[#D4AF37]' : 'bg-[#FAF7F2] border-slate-100 text-[#2C3E50] focus:border-[#BC2424]'}`}
+          className={`w-full p-4 pl-12 rounded-2xl outline-none font-bold text-sm shadow-inner border-2 transition-all ${isDarkMode ? 'bg-[#2D2D2D] border-[#3D3D3D] text-white focus:border-[#D4AF37]' : 'bg-[#FAF7F2] border-slate-100 text-[#2C3E50] focus:border-[#BC2424]'}`}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <Search className="absolute left-3.5 top-3 text-slate-300" size={18} />
+        <Search className="absolute left-4 top-4 text-slate-300" size={20} />
       </div>
-      <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar space-y-2">
+
+      <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-max">
         {dictionary
           .filter(d => String(d.esp).toLowerCase().includes(search.toLowerCase()) || String(d.romaji).toLowerCase().includes(search.toLowerCase()))
           .map((d, i) => (
@@ -30,12 +31,15 @@ const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-sm border transition-colors ${isDarkMode ? 'bg-[#2D2D2D] text-[#D4AF37] border-[#3D3D3D] group-hover:bg-[#D4AF37] group-hover:text-black' : 'bg-[#FAF7F2] text-[#BC2424] border-[#E8DCC4] group-hover:bg-[#BC2424] group-hover:text-white'}`}>
                   {String(d.esp).charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-black uppercase tracking-tighter truncate max-w-[120px] sm:max-w-none">{String(d.esp)}</p>
-                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-[0.1em]">{String(d.tipo)}</p>
+
+                {/* Back: Romaji */}
+                <div className={`absolute inset-0 backface-hidden rotate-y-180 rounded-2xl border-2 flex flex-col justify-center items-center p-4 transition-colors shadow-xl ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37] text-[#D4AF37]' : 'bg-[#BC2424] border-[#8B1A1A] text-white'}`}>
+                   <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">LECTURA ROMAJI</p>
+                   <p className="text-2xl font-black font-mono tracking-tighter text-center">{String(d.romaji || "—")}</p>
+                   <p className="text-[10px] font-bold mt-2 italic opacity-60">Dominio de Bóveda</p>
                 </div>
+
               </div>
-              <p className={`text-lg font-black font-mono tracking-tighter ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(d.romaji || "—")}</p>
             </div>
           ))}
       </div>
