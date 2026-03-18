@@ -4,29 +4,15 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 /**
- * ZERO COST ARCHITECTURE - APPLIED:
- *
- * We utilize the @google/generative-ai SDK directly to ensure compatibility with
- * the Firebase Spark Plan (Zero Cost).
- *
- * SECURITY ADVICE FOR PRODUCTION:
- * To protect your API Key from extraction (theft), the user requested Vertex AI for Firebase.
- *
- * Implementation Note:
- * - Direct Client SDK (Currently used): Requires NEXT_PUBLIC_GEMINI_API_KEY. Vulnerable to key theft. Free.
- * - Vertex AI for Firebase (Production alternative): No key needed in code. Protected via App Check.
- *   Requires 'Blaze Plan' (Pay as you go) to enable Cloud Functions/Vertex AI APIs.
- *
- * How to switch:
- * 1. Upgrade to Blaze Plan.
- * 2. Enable Vertex AI in Firebase Console.
- * 3. Change import to 'firebase/vertex-ai-preview'.
- * 4. Replace GoogleGenerativeAI with getVertexAI().
+ * PRODUCTION NOTE:
+ * For production security (APK/Web), Vertex AI for Firebase uses the 'firebase/ai' SDK.
+ * This protects your API Key by routing requests through Firebase's backend.
+ * For maximum security, enable 'Firebase App Check' in the Firebase Console.
  */
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getAI, getGenerativeModel, VertexAIBackend } from "firebase/ai";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCIZ_D9h-ZJ0AueFinQXu4VxSpx1p68QP8", // This is the Firebase/Web App key
+  apiKey: "AIzaSyCIZ_D9h-ZJ0AueFinQXu4VxSpx1p68QP8",
   authDomain: "adventours-nihongo.firebaseapp.com",
   projectId: "adventours-nihongo",
   storageBucket: "adventours-nihongo.firebasestorage.app",
@@ -39,14 +25,9 @@ const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-// Use Key from environment or fallback to Firebase Config (which contains the same key string in this project)
-const geminiApiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || firebaseConfig.apiKey;
-const genAI = new GoogleGenerativeAI(geminiApiKey);
-
-export const generativeModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-export const generativeModelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+export const ai = getAI(app, { backend: new VertexAIBackend() });
+export const generativeModel = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
+export const generativeModelFallback = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 export const appId = 'adventours-cr-nihongo';
 export const APP_VERSION = '1.0.1'; // Increment this to force cache refresh
 

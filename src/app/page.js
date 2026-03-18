@@ -1,8 +1,8 @@
 'use client';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, collection, onSnapshot, updateDoc, getDocs, query, limit, getDoc } from 'firebase/firestore';
-import { auth, db, appId, MASTER_SEED, generativeModel, generativeModelFallback, APP_VERSION } from '@/lib/firebase';
+import { doc, setDoc, collection, onSnapshot, updateDoc, getDocs, query, limit } from 'firebase/firestore';
+import { auth, db, appId, MASTER_SEED } from '@/lib/firebase';
 
 import Header from '@/components/layout/Header';
 import MobileFooter from '@/components/layout/MobileFooter';
@@ -55,6 +55,7 @@ export default function App() {
 
   useEffect(() => {
     const initData = async () => {
+      // 1. Load from LocalStorage immediately for instant UX
       const cachedVocab = localStorage.getItem('adventours_vocab');
       const cachedGrammar = localStorage.getItem('adventours_grammar');
       const cachedVersion = localStorage.getItem('adventours_version');
@@ -62,6 +63,7 @@ export default function App() {
       if (cachedVocab) setDictionary(JSON.parse(cachedVocab));
       if (cachedGrammar) setGrammarManual(JSON.parse(cachedGrammar));
 
+      // 2. Wait for user auth before checking server
       if (!user) return;
 
       const metadataRef = doc(db, 'artifacts', appId, 'public', 'metadata');
@@ -72,7 +74,10 @@ export default function App() {
         const metaSnap = await getDoc(metadataRef);
         const serverVersion = metaSnap.exists() ? metaSnap.data().version : '0.0.0';
 
+        // 3. Compare versions using localStorage directly to avoid state lag
         if (serverVersion !== cachedVersion || !cachedVocab) {
+          console.log("Sincronizando biblioteca con el servidor (Nueva versión detected o caché vacío)...");
+
           const [vocabSnap, grammarSnap] = await Promise.all([
             getDocs(vocabRef),
             getDocs(grammarRef)
@@ -81,6 +86,7 @@ export default function App() {
           let finalVocab = [];
           if (vocabSnap.empty) {
             finalVocab = MASTER_SEED.VOCABULARY;
+            // Seed if empty (careful with 10k items, better in chunks/background)
             MASTER_SEED.VOCABULARY.forEach(item => {
               const id = (item.romaji || item.esp).replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
               setDoc(doc(vocabRef, id), item);
@@ -108,55 +114,60 @@ export default function App() {
           if (!metaSnap.exists()) {
             await setDoc(metadataRef, { version: APP_VERSION, last_updated: new Date().toISOString() });
           }
-        }
-      } catch (err) { console.error("Error sincronizando datos:", err); }
-
-      const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
-      const progressRef = collection(db, 'artifacts', appId, 'users', user.uid, 'progress');
-
-      const unsubUser = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const now = new Date();
-          const last = data.lastActivity ? new Date(data.lastActivity) : null;
-          let newStreak = data.streak || 0;
-
-          if (last) {
-            const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
-            if (diffDays > 1) {
-              newStreak = 0;
-              updateDoc(userDocRef, { streak: 0 });
-            }
-          }
-          setUserStats(prev => ({ ...prev, ...data, streak: newStreak }));
         } else {
-          setDoc(userDocRef, {
-            xp: 0,
-            streak: 0,
-            lastActivity: new Date().toISOString(),
-            belt: 'Blanco',
-            history: []
-          });
+          console.log("Biblioteca cargada localmente. Ahorro de lecturas Firebase: 100%.");
         }
-      });
+      } catch (err) {
+        console.error("Error sincronizando datos:", err);
+      }
+    };
 
-      const q = query(progressRef, limit(100));
+    const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
+    const progressRef = collection(db, 'artifacts', appId, 'users', user.uid, 'progress');
+
+    const unsubUser = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+
+        // Streak Logic
+        const now = new Date();
+        const last = data.lastActivity ? new Date(data.lastActivity) : null;
+        let newStreak = data.streak || 0;
+
+        if (last) {
+          const diffDays = Math.floor((now - last) / (1000 * 60 * 60 * 24));
+          if (diffDays === 1) {
+             // Streak continues (but only increment if it's a new day, we'll do this on action)
+          } else if (diffDays > 1) {
+            newStreak = 0; // Streak broken
+            updateDoc(userDocRef, { streak: 0 });
+          }
+        }
+
+        setUserStats(prev => ({ ...prev, ...data, streak: newStreak }));
+      } else {
+        setDoc(userDocRef, {
+          xp: 0,
+          streak: 0,
+          lastActivity: new Date().toISOString(),
+          belt: 'Blanco',
+          history: []
+        });
+      }
+    });
+
+    // Only fetch a subset of progress to avoid 10k docs issue
+    const fetchProgress = async () => {
+      const q = query(progressRef, limit(100)); // Limit for performance, real SRS would use date queries
       const snapshot = await getDocs(q);
       const progress = {};
       snapshot.docs.forEach(doc => { progress[doc.id] = doc.data(); });
       setUserProgress(progress);
-
-      return () => unsubUser();
     };
+    fetchProgress();
 
-    if (user) initData();
+    return () => { unsubVocab(); unsubGrammar(); unsubUser(); };
   }, [user]);
-
-  const triggerHanko = (text) => {
-    setHankoText(text);
-    setHankoVisible(true);
-    setTimeout(() => setHankoVisible(false), 3000);
-  };
 
   const saveHistory = async (original, translation, uniqueRules) => {
     if (!user) return;
@@ -168,7 +179,9 @@ export default function App() {
       timestamp: new Date().toISOString()
     };
 
+    // Maintain only last 20
     const newHistory = [...(userStats.history || []), historyItem].slice(-20);
+
     const now = new Date();
     const last = userStats.lastActivity ? new Date(userStats.lastActivity) : null;
     let newStreak = userStats.streak || 0;
@@ -215,6 +228,7 @@ export default function App() {
       if (match) {
         const technicalTypes = ["Negocios", "Leyes", "Ingeniería", "Medicina", "Tecnología", "Ciencia"];
         const isTechnical = technicalTypes.includes(match.tipo) || technicalTypes.includes(match.categoria);
+
         const item = { ...match, status: 'found', isTechnical };
         desglose.push(item);
 
@@ -305,30 +319,15 @@ export default function App() {
     setChatInput('');
     setIsTyping(true);
 
+    const geminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
     const deepseekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || "";
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
 
-    const tryGeminiFree = async (modelInstance) => {
-      // Gemini requires the first message in history to be from 'user'
-      let chatHistory = messages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.text }]
-      }));
+    // Strategy: Try Gemini first, fallback to DeepSeek if available, finally Local Response
+    try {
+      if (!geminiKey) throw new Error("No Gemini Key");
 
-      if (chatHistory.length > 0 && chatHistory[0].role === 'model') {
-        chatHistory = chatHistory.slice(1);
-      }
-
-      const chat = modelInstance.startChat({
-        history: chatHistory
-      });
-      const result = await chat.sendMessage(userMsg);
-      const response = await result.response;
-      return response.text();
-    };
-
-    const tryDeepSeek = async () => {
-      const resp = await fetch("https://api.deepseek.com/chat/completions", {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -336,7 +335,10 @@ export default function App() {
         },
         body: JSON.stringify({
           model: "deepseek-chat",
-          messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userMsg }],
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMsg }
+          ],
           stream: false
         })
       });
@@ -348,21 +350,54 @@ export default function App() {
     try {
       let aiResponse;
       try {
-        aiResponse = await tryGeminiFree(generativeModel);
+        aiResponse = await tryGeminiVertex(generativeModel);
       } catch (e20) {
-        console.warn("Gemini 2.0 Free Tier failed", e20);
-        try { aiResponse = await tryGeminiFree(generativeModelFallback); } catch (e15) { console.warn("Gemini 1.5 Free Tier fallback failed", e15); }
+        console.warn("Gemini 2.0 Vertex failed", e20);
+        try {
+          aiResponse = await tryGeminiVertex(generativeModelFallback);
+        } catch (e15) {
+          console.warn("Gemini 1.5 Vertex fallback failed", e15);
+        }
       }
 
-      if (!aiResponse && deepseekKey) {
-        try { aiResponse = await tryDeepSeek(); } catch (eds) { console.warn("DeepSeek fallback failed", eds); }
-      }
+      if (!response.ok) throw new Error("Gemini API Error");
 
-      if (aiResponse) setMessages(prev => [...prev, { role: 'assistant', text: aiResponse }]);
-      else throw new Error("All AI tiers failed");
-    } catch (e) {
-      setMessages(prev => [...prev, { role: 'assistant', text: generateLocalResponse(userMsg) }]);
-    } finally { setIsTyping(false); }
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake..." }]);
+    } catch (geminiError) {
+      console.warn("Gemini falló, intentando DeepSeek...", geminiError);
+
+      try {
+        if (!deepseekKey) throw new Error("No DeepSeek Key");
+
+        // Assuming DeepSeek Chat API (OpenAI compatible)
+        const response = await fetch("https://api.deepseek.com/chat/completions", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: "deepseek-chat",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userMsg }
+            ]
+          })
+        });
+
+        if (!response.ok) throw new Error("DeepSeek API Error");
+
+        const data = await response.json();
+        setMessages(prev => [...prev, { role: 'assistant', text: data.choices?.[0]?.message?.content || "Moushiwake..." }]);
+      } catch (deepseekError) {
+        console.warn("DeepSeek también falló o no está configurado. Usando motor local.", deepseekError);
+        const localMsg = generateLocalResponse(userMsg);
+        setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
+      }
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
@@ -386,9 +421,20 @@ export default function App() {
 
   return (
     <div className={`min-h-screen font-sans theme-transition relative overflow-x-hidden pb-24 md:pb-8 ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#FAF7F2] text-[#2C3E50]'}`}>
+
       <div className="fixed inset-0 pointer-events-none z-0">
         {petals.map((p) => (
-          <div key={p.id} className="sakura-petal" style={{ left: `${p.left}vw`, width: `${p.width}px`, height: `${p.height}px`, animation: `sakura-fall ${p.duration}s linear infinite`, animationDelay: `${p.delay}s` }} />
+          <div
+            key={p.id}
+            className="sakura-petal"
+            style={{
+              left: `${p.left}vw`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              animation: `sakura-fall ${p.duration}s linear infinite`,
+              animationDelay: `${p.delay}s`
+            }}
+          />
         ))}
       </div>
 
@@ -406,6 +452,7 @@ export default function App() {
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
       <main className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 relative z-10">
+
         <div className="hidden md:flex justify-center flex-wrap gap-3 py-2">
           {[
             { id: 'inicio', Icon: ArrowRightLeft, label: 'Traductor' },

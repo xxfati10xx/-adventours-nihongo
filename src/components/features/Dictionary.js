@@ -3,16 +3,11 @@ import { Search, Info, X } from 'lucide-react';
 
 const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
   const [selectedWord, setSelectedWord] = useState(null);
-  const [flippedIndex, setFlippedIndex] = useState(null);
 
   return (
-    <section className={`p-4 md:p-8 rounded-[2rem] border-2 flex flex-col h-[70vh] animate-fade-in-up theme-transition relative ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-lg'}`}>
-      <div className="flex justify-between items-center mb-4 border-b pb-2 transition-colors">
-        <h2 className={`text-xs font-black uppercase tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Librería N5-N1</h2>
-        <span className="text-[10px] font-bold opacity-50 uppercase">Toca para girar</span>
-      </div>
-
-      <div className="relative mb-6">
+    <section className={`p-4 md:p-8 rounded-[2rem] border-2 flex flex-col h-[70vh] animate-fade-in-up relative ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-lg'}`}>
+      <h2 className={`text-xs font-black uppercase tracking-[0.3em] mb-4 border-b pb-2 ${isDarkMode ? 'text-[#D4AF37] border-gray-700' : 'text-[#BC2424] border-rose-50'}`}>Librería N5-N1</h2>
+      <div className="relative mb-4">
         <input
           type="text"
           placeholder="Buscar concepto..."
@@ -29,26 +24,12 @@ const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
           .map((d, i) => (
             <div
               key={i}
-              className="perspective-1000 h-32 cursor-pointer group active-press"
-              onClick={() => setFlippedIndex(flippedIndex === i ? null : i)}
+              onClick={() => setSelectedWord(d)}
+              className={`flex justify-between items-center p-3 rounded-xl border-2 transition-all shadow-sm group cursor-pointer ${isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#FAF7F2] hover:border-[#BC2424]'}`}
             >
-              <div className={`relative w-full h-full transition-transform duration-500 preserve-3d ${flippedIndex === i ? 'rotate-y-180' : ''}`}>
-
-                {/* Front: Spanish */}
-                <div className={`absolute inset-0 backface-hidden rounded-2xl border-2 flex flex-col justify-between p-4 transition-colors shadow-md ${isDarkMode ? 'bg-[#121212] border-[#2D2D2D] text-white' : 'bg-white border-[#FAF7F2] text-[#2C3E50]'}`}>
-                  <div className="flex justify-between items-start">
-                    <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${isDarkMode ? 'bg-[#2D2D2D] text-[#D4AF37]' : 'bg-[#FAF7F2] text-[#BC2424]'}`}>{String(d.tipo)}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedWord(d); }}
-                      className="p-1 rounded-full hover:bg-slate-100 transition-colors"
-                    >
-                      <Info size={14} className="text-slate-400" />
-                    </button>
-                  </div>
-                  <p className="text-xl font-black uppercase tracking-tighter text-center">{String(d.esp)}</p>
-                  <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                    <div className={`h-full transition-all duration-1000 ${isDarkMode ? 'bg-[#D4AF37]' : 'bg-[#BC2424]'}`} style={{ width: `${(i * 13) % 60 + 20}%` }}></div>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-sm border transition-colors ${isDarkMode ? 'bg-[#2D2D2D] text-[#D4AF37] border-[#3D3D3D] group-hover:bg-[#D4AF37] group-hover:text-black' : 'bg-[#FAF7F2] text-[#BC2424] border-[#E8DCC4] group-hover:bg-[#BC2424] group-hover:text-white'}`}>
+                  {String(d.esp).charAt(0).toUpperCase()}
                 </div>
 
                 {/* Back: Romaji */}

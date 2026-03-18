@@ -3,42 +3,6 @@ import { Info, Zap } from 'lucide-react';
 import { SakuraIcon } from '../icons/JapaneseIcons';
 
 const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }) => {
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [placedItems, setPlacedItems] = useState([]);
-  const [errorIndex, setErrorIndex] = useState(null);
-
-  // Filter out grammar particles and missing items for the puzzle
-  const puzzleItems = useMemo(() => {
-    return result.desglose
-      .filter(item => item.status === 'found' && item.tipo !== 'GRAMATICA' && item.romaji !== "")
-      .sort(() => Math.random() - 0.5);
-  }, [result.desglose]);
-
-  const expectedOrder = useMemo(() => {
-    return result.desglose
-      .filter(item => item.status === 'found' && item.tipo !== 'GRAMATICA' && item.romaji !== "")
-      .map(item => item.romaji);
-  }, [result.desglose]);
-
-  useEffect(() => {
-    setPlacedItems([]);
-  }, [inputText]);
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (!draggedItem) return;
-
-    const nextExpected = expectedOrder[placedItems.length];
-    if (draggedItem.romaji === nextExpected) {
-      setPlacedItems([...placedItems, draggedItem.romaji]);
-      setErrorIndex(null);
-    } else {
-      setErrorIndex(puzzleItems.findIndex(item => item.romaji === draggedItem.romaji));
-      setTimeout(() => setErrorIndex(null), 500);
-    }
-    setDraggedItem(null);
-  };
-
   return (
     <section className={`p-4 md:p-8 rounded-[2rem] border-2 theme-transition animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-md'}`}>
       <textarea
@@ -54,27 +18,9 @@ const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }
         className={`p-6 md:p-10 rounded-3xl text-center mb-6 border-2 shadow-xl relative overflow-hidden transition-colors ${isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37]' : 'bg-gradient-to-br from-[#FAF7F2] to-[#F3EEE5] border-[#E8DCC4]'} ${placedItems.length === expectedOrder.length && expectedOrder.length > 0 ? 'kintsugi-glow' : ''}`}
       >
         <div className={`absolute top-4 right-4 opacity-10 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}><SakuraIcon size={40}/></div>
-        <p className={`text-[10px] font-black uppercase mb-2 tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Área de Disección</p>
-
-        {expectedOrder.length > 0 ? (
-          <div className="flex flex-wrap justify-center gap-2 min-h-[3rem] items-center">
-            {placedItems.map((romaji, idx) => (
-              <span key={idx} className={`text-2xl md:text-4xl font-black tracking-tight animate-fade-in-up ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>
-                {romaji}{idx < expectedOrder.length - 1 ? "" : ""}
-              </span>
-            ))}
-            {placedItems.length < expectedOrder.length && (
-              <div className="w-12 h-1 bg-slate-200 rounded-full animate-pulse mx-2"></div>
-            )}
-            {placedItems.length === expectedOrder.length && (
-              <span className="text-2xl md:text-4xl font-black tracking-tight animate-fade-in-up">。</span>
-            )}
-          </div>
-        ) : (
-          <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight opacity-20">Esperando frase...</p>
-        )}
-
-        {result.oracion && placedItems.length === expectedOrder.length && (
+        <p className={`text-[10px] font-black uppercase mb-2 tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Resultado Japonés</p>
+        <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight">{result.oracion || "..."}</p>
+        {result.oracion && (
           <button
             onClick={() => saveHistory(inputText, result.oracion, result.uniqueRules)}
             className={`mt-4 px-4 py-1 rounded-full text-[8px] font-black uppercase border-2 transition-all ${isDarkMode ? 'bg-[#121212] border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black' : 'bg-white border-[#BC2424] text-[#BC2424] hover:bg-[#BC2424] hover:text-white'}`}
@@ -86,7 +32,7 @@ const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }
 
       {puzzleItems.length > 0 && placedItems.length < expectedOrder.length && (
         <div className="mb-8 p-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía (Drag & Drop):</p>
+           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía:</p>
            <div className="flex flex-wrap justify-center gap-3">
              {puzzleItems
                .filter(item => !placedItems.includes(item.romaji))
