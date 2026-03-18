@@ -1,26 +1,26 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Info, Zap } from 'lucide-react';
 import { SakuraIcon } from '../icons/JapaneseIcons';
 
-const Translator = ({ inputText, setInputText, result, isDarkMode }) => {
-  const [draggedItem, setDraggedItem] = React.useState(null);
-  const [placedItems, setPlacedItems] = React.useState([]);
-  const [errorIndex, setErrorIndex] = React.useState(null);
+const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }) => {
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [placedItems, setPlacedItems] = useState([]);
+  const [errorIndex, setErrorIndex] = useState(null);
 
   // Filter out grammar particles and missing items for the puzzle
-  const puzzleItems = React.useMemo(() => {
+  const puzzleItems = useMemo(() => {
     return result.desglose
       .filter(item => item.status === 'found' && item.tipo !== 'GRAMATICA' && item.romaji !== "")
       .sort(() => Math.random() - 0.5);
   }, [result.desglose]);
 
-  const expectedOrder = React.useMemo(() => {
+  const expectedOrder = useMemo(() => {
     return result.desglose
       .filter(item => item.status === 'found' && item.tipo !== 'GRAMATICA' && item.romaji !== "")
       .map(item => item.romaji);
   }, [result.desglose]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setPlacedItems([]);
   }, [inputText]);
 
@@ -73,11 +73,20 @@ const Translator = ({ inputText, setInputText, result, isDarkMode }) => {
         ) : (
           <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight opacity-20">Esperando frase...</p>
         )}
+
+        {result.oracion && placedItems.length === expectedOrder.length && (
+          <button
+            onClick={() => saveHistory(inputText, result.oracion, result.uniqueRules)}
+            className={`mt-4 px-4 py-1 rounded-full text-[8px] font-black uppercase border-2 transition-all ${isDarkMode ? 'bg-[#121212] border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black' : 'bg-white border-[#BC2424] text-[#BC2424] hover:bg-[#BC2424] hover:text-white'}`}
+          >
+            Guardar en Historial (+10 XP)
+          </button>
+        )}
       </div>
 
       {puzzleItems.length > 0 && placedItems.length < expectedOrder.length && (
         <div className="mb-8 p-4 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía:</p>
+           <p className="text-[9px] font-black uppercase tracking-widest text-center mb-4 opacity-50">Ordena los bloques de la radiografía (Drag & Drop):</p>
            <div className="flex flex-wrap justify-center gap-3">
              {puzzleItems
                .filter(item => !placedItems.includes(item.romaji))
@@ -114,10 +123,20 @@ const Translator = ({ inputText, setInputText, result, isDarkMode }) => {
 
       <div className="flex flex-wrap gap-3 justify-center">
         {result.desglose.map((item, i) => (
-          <div key={i} className={`p-4 rounded-2xl border-2 flex flex-col items-center min-w-[100px] flex-1 transition-all transform hover:scale-105 shadow-sm ${item.status === 'missing' ? (isDarkMode ? 'bg-red-900/20 border-red-900' : 'bg-rose-50 border-rose-100') : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')}`}>
-            <span className={`text-[8px] font-black uppercase mb-1 tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(item.tipo || 'DESCONOCIDO')}</span>
+          <div key={i} className={`p-4 rounded-2xl border-2 flex flex-col items-center min-w-[100px] flex-1 transition-all transform hover:scale-105 shadow-sm ${
+            item.status === 'missing'
+              ? (isDarkMode ? 'bg-red-900/20 border-red-900' : 'bg-rose-50 border-rose-100')
+              : item.isTechnical
+                ? (isDarkMode ? 'bg-[#2D2D2D] border-[#D4AF37] ring-1 ring-[#D4AF37]' : 'bg-[#FFF9E6] border-[#D4AF37] ring-1 ring-[#D4AF37]')
+                : (isDarkMode ? 'bg-[#121212] border-[#2D2D2D] hover:border-[#D4AF37]' : 'bg-white border-[#E8DCC4] hover:border-[#BC2424]')
+          }`}>
+            <div className="flex items-center gap-1 mb-1">
+              {item.isTechnical && <Zap size={10} className={isDarkMode ? 'text-[#D4AF37]' : 'text-[#B8860B]'} />}
+              <span className={`text-[8px] font-black uppercase tracking-widest ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>{String(item.tipo || 'DESCONOCIDO')}</span>
+            </div>
             <span className="font-black text-lg md:text-xl">{item.romaji === "" ? "—" : String(item.romaji || "???")}</span>
             <span className="text-[10px] text-gray-400 font-bold italic text-center mt-1">{String(item.esp)}</span>
+            {item.isTechnical && <span className={`text-[7px] font-black uppercase mt-1 px-2 py-0.5 rounded-full ${isDarkMode ? 'bg-[#D4AF37] text-black' : 'bg-[#D4AF37] text-white'}`}>Técnico</span>}
           </div>
         ))}
       </div>
