@@ -3,8 +3,15 @@ import { getAnalytics } from 'firebase/analytics';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+/**
+ * ZERO COST CONFIGURATION:
+ * We use the standard Google AI SDK (@google/generative-ai) for Cost-Free API access (Spark Plan).
+ * This ensures your app stays in the free tier of Google AI Studio without requiring Blaze Plan billing.
+ */
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDCDMIXn6ddA_RMLpN1_AgC4eVAQMl4ciw",
+  apiKey: "AIzaSyCIZ_D9h-ZJ0AueFinQXu4VxSpx1p68QP8",
   authDomain: "adventours-nihongo.firebaseapp.com",
   projectId: "adventours-nihongo",
   storageBucket: "adventours-nihongo.firebasestorage.app",
@@ -17,6 +24,12 @@ const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Google AI Free Tier client
+const genAI = new GoogleGenerativeAI(firebaseConfig.apiKey);
+export const generativeModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+export const generativeModelFallback = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 export const appId = 'adventours-cr-nihongo';
 
 export const MASTER_SEED = {

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
-import { auth, db, appId, MASTER_SEED } from '@/lib/firebase';
+import { auth, db, appId, MASTER_SEED, generativeModel, generativeModelFallback } from '@/lib/firebase';
 
 import Header from '@/components/layout/Header';
 import MobileFooter from '@/components/layout/MobileFooter';
@@ -20,6 +20,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('inicio');
   const [search, setSearch] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [hankoVisible, setHankoVisible] = useState(false);
+  const [hankoText, setHankoText] = useState('N5');
 
   const [messages, setMessages] = useState([{
     role: 'assistant',
@@ -71,6 +73,12 @@ export default function App() {
 
     return () => { unsubVocab(); unsubGrammar(); };
   }, [user]);
+
+  const triggerHanko = (text) => {
+    setHankoText(text);
+    setHankoVisible(true);
+    setTimeout(() => setHankoVisible(false), 3000);
+  };
 
   const result = useMemo(() => {
     const dictMap = new Map();
@@ -155,7 +163,8 @@ export default function App() {
     const uniqueRules = Array.from(new Set(reglasAplicadas.map(a => a.title)))
       .map(title => reglasAplicadas.find(a => a.title === title));
 
-    return { oracion: oracionFinal.join(" ") + (oracionFinal.length > 0 ? "。" : ""), desglose, uniqueRules };
+    const finalOracion = oracionFinal.join(" ") + (oracionFinal.length > 0 ? "。" : "");
+    return { oracion: finalOracion, desglose, uniqueRules };
   }, [inputText, dictionary]);
 
   const generateLocalResponse = (input) => {
@@ -200,38 +209,125 @@ export default function App() {
     setChatInput('');
     setIsTyping(true);
 
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const deepseekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY || "";
     const systemPrompt = "Eres el Gran Maestro de AdventoursCR Nihongo. Responde basándote en 10,000 términos y 1,000 reglas N5-N1. Tono zen comercial.";
 
-    try {
-      if (!apiKey) throw new Error("No API Key");
+    const tryGeminiFree = async (modelInstance) => {
+      // Standard Google AI SDK Chat Session
+      const chat = modelInstance.startChat({
+        history: messages.map(m => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.text }]
+        }))
+      });
+      const result = await chat.sendMessage(userMsg);
+      const response = await result.response;
+      return response.text();
+    };
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
+    const tryDeepSeek = async () => {
+      const resp = await fetch("https://api.deepseek.com/chat/completions", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${deepseekKey}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: userMsg }] }],
-          systemInstruction: { parts: [{ text: systemPrompt }] }
+          model: "deepseek-chat",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userMsg }
+          ],
+          stream: false
         })
       });
+      if (!resp.ok) throw new Error("DeepSeek Error");
+      const data = await resp.json();
+      return data.choices?.[0]?.message?.content;
+    };
 
-      if (!response.ok) throw new Error("API Error");
+    try {
+      let aiResponse;
+      try {
+        aiResponse = await tryGeminiFree(generativeModel);
+      } catch (e20) {
+        console.warn("Gemini 2.0 Free Tier failed", e20);
+        try {
+          aiResponse = await tryGeminiFree(generativeModelFallback);
+        } catch (e15) {
+          console.warn("Gemini 1.5 Free Tier fallback failed", e15);
+        }
+      }
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake, no he podido procesar tu consulta." }]);
+      if (!aiResponse && deepseekKey) {
+        try {
+          aiResponse = await tryDeepSeek();
+        } catch (eds) {
+          console.warn("DeepSeek fallback failed", eds);
+        }
+      }
+
+      if (aiResponse) {
+        setMessages(prev => [...prev, { role: 'assistant', text: aiResponse }]);
+      } else {
+        throw new Error("All AI tiers failed");
+      }
     } catch (e) {
       const localMsg = generateLocalResponse(userMsg);
       setMessages(prev => [...prev, { role: 'assistant', text: localMsg }]);
+    } finally {
+      setIsTyping(false);
     }
-    finally { setIsTyping(false); }
   };
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
+  const petals = useMemo(() => {
+    return [...Array(15)].map((_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      width: Math.random() * 10 + 5,
+      height: Math.random() * 8 + 4,
+      duration: Math.random() * 10 + 10,
+      delay: Math.random() * 10
+    }));
+  }, []);
+
+  useEffect(() => {
+    if (result.oracion && result.oracion.length > 5 && !result.oracion.includes('?')) {
+      triggerHanko("N5");
+    }
+  }, [result.oracion]);
+
   return (
-    <div className={`min-h-screen font-sans transition-colors duration-500 relative overflow-x-hidden pb-24 md:pb-8 ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#FAF7F2] text-[#2C3E50]'}`}>
+    <div className={`min-h-screen font-sans theme-transition relative overflow-x-hidden pb-24 md:pb-8 ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#FAF7F2] text-[#2C3E50]'}`}>
+
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {petals.map((p) => (
+          <div
+            key={p.id}
+            className="sakura-petal"
+            style={{
+              left: `${p.left}vw`,
+              width: `${p.width}px`,
+              height: `${p.height}px`,
+              animation: `sakura-fall ${p.duration}s linear infinite`,
+              animationDelay: `${p.delay}s`
+            }}
+          />
+        ))}
+      </div>
 
       <div className={`fixed inset-0 pointer-events-none z-0 transition-opacity duration-700 ${isDarkMode ? 'opacity-[0.05]' : 'opacity-[0.03]'}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 50 C 0 25, 25 0, 50 0 C 75 0, 100 25, 100 50 C 100 75, 75 100, 50 100 C 25 100, 0 75, 0 50 Z M 10 50 C 10 70, 30 90, 50 90 C 70 90, 90 70, 90 50 C 90 30, 70 10, 50 10 C 30 10, 10 30, 10 50 Z' fill='${isDarkMode ? '%23D4AF37' : '%23bc2424'}' /%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }}></div>
+
+      {hankoVisible && (
+        <div className="fixed top-24 right-8 z-[100] animate-hanko">
+          <div className="hanko-stamp flex flex-col items-center">
+            <span className="text-[10px] leading-tight">MAESTRO</span>
+            <span>{hankoText}</span>
+          </div>
+        </div>
+      )}
 
       <Header isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
 
