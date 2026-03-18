@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Info, Zap } from 'lucide-react';
 import { SakuraIcon } from '../icons/JapaneseIcons';
 

@@ -220,7 +220,6 @@ export default function App() {
     let reglasAplicadas = [];
 
     words.forEach((word) => {
-      // Try to find an exact match first
       let match = currentDict.find(d => d.romaji && d.romaji.toLowerCase() === word);
       if (!match) {
         match = currentDict.find(d => d.claves && d.claves.some(c => String(c).toLowerCase() === word));
@@ -273,9 +272,8 @@ export default function App() {
       });
     }
 
-    if (verbs.length > 0) {
-      oracionFinal.push(verbs[0]);
-    } else if (subjects.length > 0 || objects.length > 0) {
+    if (verbs.length > 0) oracionFinal.push(verbs[0]);
+    else if (subjects.length > 0 || objects.length > 0) {
       oracionFinal.push("desu");
       desglose.push({ romaji: "desu", esp: "Ser/Estar", tipo: "GRAMATICA", status: 'found' });
       reglasAplicadas.push({ id: 'N5-DESU', title: 'Cópula DESU', desc: 'Termina oraciones afirmativas.' });
@@ -292,12 +290,10 @@ export default function App() {
     const cleanInput = input.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?¿¡]/g, "");
     const inputWords = cleanInput.split(/\s+/).filter(w => w.length > 0);
 
-    // Search Vocabulary
     const foundWords = dictionary.filter(d =>
       inputWords.some(word => d.claves && d.claves.some(c => String(c).toLowerCase() === word))
     ).slice(0, 5);
 
-    // Search Grammar
     const foundGrammar = Object.values(grammarManual).filter(g =>
       inputWords.some(word =>
         g.regla.toLowerCase().includes(word) ||
@@ -310,15 +306,8 @@ export default function App() {
     }
 
     let response = "He consultado los pergaminos internos. Esto es lo que he encontrado para ti: \n\n";
-
-    if (foundWords.length > 0) {
-      response += "**Vocabulario:**\n" + foundWords.map(w => `- ${w.esp}: ${w.romaji}`).join("\n") + "\n\n";
-    }
-
-    if (foundGrammar.length > 0) {
-      response += "**Sabiduría Gramatical:**\n" + foundGrammar.map(g => `- ${g.regla}: ${g.detalles[0]}`).join("\n");
-    }
-
+    if (foundWords.length > 0) response += "**Vocabulario:**\n" + foundWords.map(w => `- ${w.esp}: ${w.romaji}`).join("\n") + "\n\n";
+    if (foundGrammar.length > 0) response += "**Sabiduría Gramatical:**\n" + foundGrammar.map(g => `- ${g.regla}: ${g.detalles[0]}`).join("\n");
     response += "\n\n*Nota: La conexión espiritual con Gemini está ausente. Utilizo mi conocimiento local para guiarte.*";
     return response;
   };
