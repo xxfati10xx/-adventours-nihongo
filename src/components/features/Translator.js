@@ -2,7 +2,7 @@ import React from 'react';
 import { Info, Zap } from 'lucide-react';
 import { SakuraIcon } from '../icons/JapaneseIcons';
 
-const Translator = ({ inputText, setInputText, result, isDarkMode }) => {
+const Translator = ({ inputText, setInputText, result, isDarkMode, saveHistory }) => {
   return (
     <section className={`p-4 md:p-8 rounded-[2rem] border-2 transition-all animate-fade-in-up ${isDarkMode ? 'bg-[#1A1A1A] border-[#2D2D2D] shadow-2xl' : 'bg-white border-[#E8DCC4] shadow-md'}`}>
       <textarea
@@ -16,6 +16,14 @@ const Translator = ({ inputText, setInputText, result, isDarkMode }) => {
         <div className={`absolute top-4 right-4 opacity-10 ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}><SakuraIcon size={40}/></div>
         <p className={`text-[10px] font-black uppercase mb-2 tracking-[0.3em] ${isDarkMode ? 'text-[#D4AF37]' : 'text-[#BC2424]'}`}>Resultado Japonés</p>
         <p className="text-2xl md:text-4xl font-black tracking-tight leading-tight">{result.oracion || "..."}</p>
+        {result.oracion && (
+          <button
+            onClick={() => saveHistory(inputText, result.oracion, result.uniqueRules)}
+            className={`mt-4 px-4 py-1 rounded-full text-[8px] font-black uppercase border-2 transition-all ${isDarkMode ? 'bg-[#121212] border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black' : 'bg-white border-[#BC2424] text-[#BC2424] hover:bg-[#BC2424] hover:text-white'}`}
+          >
+            Guardar en Historial (+10 XP)
+          </button>
+        )}
       </div>
 
       {result.uniqueRules.length > 0 && (
