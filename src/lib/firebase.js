@@ -122,6 +122,8 @@ export const MASTER_SEED = {
     { romaji: "taberu", esp: "Comer", claves: ["comer", "comiendo"], tipo: "Vida", grupo: "COTIDIANO", categoria: "Verbos" },
     { romaji: "mizu", esp: "Agua", claves: ["agua"], tipo: "Vida", grupo: "NATURALEZA", categoria: "Sustantivo" },
     { romaji: "nihongo", esp: "Japonés", claves: ["japones"], tipo: "Idioma", grupo: "SOCIEDAD", categoria: "Sustantivo" },
-    { romaji: "manabu", esp: "Aprender", claves: ["aprender"], tipo: "Educación", grupo: "SOCIEDAD", categoria: "Verbos" }
+    { romaji: "manabu", esp: "Aprender", claves: ["aprender"], tipo: "Educación", grupo: "SOCIEDAD", categoria: "Verbos" },
+    { romaji: "bengaru-neko", esp: "Gato de Bengala", claves: ["gato de bengala"], tipo: "Animal", grupo: "NATURALEZA", categoria: "Sustantivo" },
+    { romaji: "neko", esp: "Gato", claves: ["gato"], tipo: "Animal", grupo: "NATURALEZA", categoria: "Sustantivo" }
   ]
 };

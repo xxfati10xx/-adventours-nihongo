@@ -202,19 +202,38 @@ export default function App() {
   };
 
   const result = useMemo(() => {
-    const dictMap = new Map();
-    MASTER_SEED.VOCABULARY.forEach(item => {
-      dictMap.set(item.esp.toLowerCase(), item);
-      if (item.romaji) dictMap.set(item.romaji.toLowerCase(), item);
-    });
-    dictionary.forEach(item => {
-        if (item && item.esp) dictMap.set(item.esp.toLowerCase(), item);
-        if (item && item.romaji) dictMap.set(item.romaji.toLowerCase(), item);
-    });
-    const currentDict = Array.from(dictMap.values());
+    const combinedDict = [...MASTER_SEED.VOCABULARY, ...dictionary].filter(d => d && d.esp);
+    const currentDict = combinedDict.sort((a, b) => String(a.esp).length - String(b.esp).length);
 
     const cleanText = inputText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,!?¿¡]/g, " ");
-    const words = cleanText.split(/\s+/).filter(w => w.length > 0);
+    const rawWords = cleanText.split(/\s+/).filter(w => w.length > 0);
+
+    // Intentar encontrar frases más largas primero (Greedy Matching)
+    let words = [];
+    let i = 0;
+    while (i < rawWords.length) {
+      let foundPhrase = false;
+      // Probar frases de hasta 3 palabras
+      for (let len = 3; len >= 1; len--) {
+        if (i + len <= rawWords.length) {
+          const phrase = rawWords.slice(i, i + len).join(" ");
+          const matches = currentDict.filter(d =>
+            (d.romaji && d.romaji.toLowerCase() === phrase) ||
+            (d.claves && d.claves.some(c => String(c).toLowerCase() === phrase))
+          );
+          if (matches.length > 0) {
+            words.push(phrase);
+            i += len;
+            foundPhrase = true;
+            break;
+          }
+        }
+      }
+      if (!foundPhrase) {
+        words.push(rawWords[i]);
+        i++;
+      }
+    }
 
     let subjects = [];
     let objects = [];
@@ -224,9 +243,16 @@ export default function App() {
     let reglasAplicadas = [];
 
     words.forEach((word, idx) => {
-      let match = currentDict.find(d => d.romaji && d.romaji.toLowerCase() === word);
-      if (!match) {
-        match = currentDict.find(d => d.claves && d.claves.some(c => String(c).toLowerCase() === word));
+      // Lógica de Prioridad por Simplicidad: Buscar todas las coincidencias
+      const matches = currentDict.filter(d =>
+        (d.romaji && d.romaji.toLowerCase() === word) ||
+        (d.claves && d.claves.some(c => String(c).toLowerCase() === word))
+      );
+
+      // Priorizar el término más corto y genérico (basado en la longitud de 'esp')
+      let match = null;
+      if (matches.length > 0) {
+        match = matches.sort((a, b) => String(a.esp).length - String(b.esp).length)[0];
       }
 
       if (match) {
