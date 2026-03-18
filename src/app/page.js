@@ -26,8 +26,8 @@ export default function App() {
     history: []
   });
   const [userProgress, setUserProgress] = useState({});
-  const [dictionary, setDictionary] = useState([]);
-  const [grammarManual, setGrammarManual] = useState({});
+  const [dictionary, setDictionary] = useState(MASTER_SEED.VOCABULARY);
+  const [grammarManual, setGrammarManual] = useState(MASTER_SEED.GRAMMAR);
   const [inputText, setInputText] = useState('Sensei leer libro');
   const [activeTab, setActiveTab] = useState('inicio');
   const [search, setSearch] = useState('');
@@ -219,10 +219,11 @@ export default function App() {
     let subjects = [];
     let objects = [];
     let verbs = [];
+    let timeLoc = [];
     let desglose = [];
     let reglasAplicadas = [];
 
-    words.forEach((word) => {
+    words.forEach((word, idx) => {
       let match = currentDict.find(d => d.romaji && d.romaji.toLowerCase() === word);
       if (!match) {
         match = currentDict.find(d => d.claves && d.claves.some(c => String(c).toLowerCase() === word));
@@ -237,13 +238,16 @@ export default function App() {
 
         if (match.categoria === "Verbos" || match.tipo === "Verbos") {
           verbs.push(match.romaji);
-        } else if (match.categoria === "Sustantivo" || ["Negocios", "Leyes", "Cognición", "Tiempo", "Empresa", "Sociedad", "Persona", "Objeto"].includes(match.tipo)) {
+        } else if (match.tipo === "Tiempo") {
+          timeLoc.push({ romaji: match.romaji, particle: 'ni' });
+          reglasAplicadas.push({ id: 'P-NI', title: 'Partícula NI', desc: 'Marca el tiempo.' });
+        } else if (match.categoria === "Sustantivo" || ["Negocios", "Leyes", "Cognición", "Empresa", "Sociedad", "Persona", "Objeto"].includes(match.tipo)) {
           if (subjects.length === 0) {
             subjects.push(match.romaji);
-            reglasAplicadas.push({ id: 'N5-WA', title: 'Partícula WA', desc: 'Marca el tema principal.' });
+            reglasAplicadas.push({ id: 'L1-WA', title: 'Partícula WA', desc: 'Nivel 1: Marca el tema.' });
           } else {
             objects.push(match.romaji);
-            reglasAplicadas.push({ id: 'N5-O', title: 'Partícula O', desc: 'Marca el objeto directo.' });
+            reglasAplicadas.push({ id: 'L2-O', title: 'Partícula WO', desc: 'Nivel 2: Objeto directo.' });
           }
         } else {
           objects.push(match.romaji);
@@ -266,20 +270,30 @@ export default function App() {
       oracionFinal.push("wa");
     }
 
+    if (timeLoc.length > 0) {
+      timeLoc.forEach(tl => {
+        oracionFinal.push(tl.romaji);
+        oracionFinal.push(tl.particle);
+      });
+    }
+
     if (objects.length > 0) {
       objects.forEach((obj, idx) => {
         oracionFinal.push(obj);
         if (idx === objects.length - 1 && verbs.length > 0) {
-          oracionFinal.push("o");
+          oracionFinal.push("wo");
         }
       });
     }
 
-    if (verbs.length > 0) oracionFinal.push(verbs[0]);
+    if (verbs.length > 0) {
+      oracionFinal.push(verbs[0] + "masu");
+      reglasAplicadas.push({ id: 'L2-MASU', title: 'Forma ~MASU', desc: 'Nivel 2: Presente cortés.' });
+    }
     else if (subjects.length > 0 || objects.length > 0) {
       oracionFinal.push("desu");
       desglose.push({ romaji: "desu", esp: "Ser/Estar", tipo: "GRAMATICA", status: 'found' });
-      reglasAplicadas.push({ id: 'N5-DESU', title: 'Cópula DESU', desc: 'Termina oraciones afirmativas.' });
+      reglasAplicadas.push({ id: 'L1-DESU', title: 'Cópula DESU', desc: 'Nivel 1: Termina oraciones.' });
     }
 
     const uniqueRules = Array.from(new Set(reglasAplicadas.map(a => a.title)))
@@ -333,42 +347,17 @@ export default function App() {
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${deepseekKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userMsg }
-          ],
-          stream: false
+          contents: [{ parts: [{ text: `${systemPrompt}\n\nUser: ${userMsg}` }] }]
         })
       });
-      if (!response.ok) throw new Error("DeepSeek Error");
-      const data = await response.json();
-      return data.choices?.[0]?.message?.content;
-    } catch (e) {
-      console.warn("Direct DeepSeek fallback failed", e);
-    }
-
-    try {
-      let aiResponse;
-      try {
-        aiResponse = await tryGeminiVertex(generativeModel);
-      } catch (e20) {
-        console.warn("Gemini 2.0 Vertex failed", e20);
-        try {
-          aiResponse = await tryGeminiVertex(generativeModelFallback);
-        } catch (e15) {
-          console.warn("Gemini 1.5 Vertex fallback failed", e15);
-        }
-      }
-
       if (!response.ok) throw new Error("Gemini API Error");
-
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'assistant', text: data.candidates?.[0]?.content?.parts?.[0]?.text || "Moushiwake..." }]);
+      setIsTyping(false);
+      return;
     } catch (geminiError) {
       console.warn("Gemini falló, intentando DeepSeek...", geminiError);
 
@@ -427,9 +416,10 @@ export default function App() {
 
   useEffect(() => {
     if (result.oracion && result.oracion.length > 5 && !result.oracion.includes('?')) {
-      triggerHanko("N5");
+      const level = result.uniqueRules.some(r => r.id === 'L2-MASU') ? 'L2' : 'L1';
+      triggerHanko(level);
     }
-  }, [result.oracion]);
+  }, [result.oracion, result.uniqueRules]);
 
   return (
     <div className={`min-h-screen font-sans theme-transition relative overflow-x-hidden pb-24 md:pb-8 ${isDarkMode ? 'bg-[#121212] text-[#E0E0E0]' : 'bg-[#FAF7F2] text-[#2C3E50]'}`}>
