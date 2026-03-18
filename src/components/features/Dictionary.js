@@ -3,11 +3,43 @@ import { Search, Info, X, BookOpen, Star } from 'lucide-react';
 
 const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
   const [selectedWord, setSelectedWord] = useState(null);
+  const [appliedLevel, setAppliedLevel] = useState(1);
+
+  const conjugateWord = (word, level) => {
+    if (!word || !word.romaji) return "—";
+    if (word.categoria !== "Verbos" && word.tipo !== "Verbos") return word.romaji;
+
+    const root = word.romaji.replace(/u$/, "");
+    switch (level) {
+      case 2: return word.romaji + "masu";
+      case 3: return word.romaji + "mashita / " + word.romaji + "masen";
+      case 4: return word.romaji + "masu ka?";
+      case 7: return root + "tai desu";
+      case 8: return root + "mashou!";
+      case 10: return root + "te imasu";
+      case 12: return root + "reru";
+      default: return word.romaji;
+    }
+  };
+
+  const getLevelInfo = (level) => {
+    const levels = {
+      1: "Verb to Be (Identity)",
+      2: "Simple Present (Action)",
+      3: "Past & Negative",
+      4: "Questions (KA)",
+      7: "Desire (I want to...)",
+      8: "Invitations (Let's go)",
+      10: "Continuous (-ing)",
+      12: "Potential (Can do)"
+    };
+    return levels[level] || "Standard Form";
+  };
 
   return (
     <section className={`p-6 md:p-8 card-bubble flex flex-col h-[75vh] animate-pop-in relative overflow-hidden transition-all ${isDarkMode ? 'bg-[#242444] border-jp-sun' : 'bg-white border-[#F0EAD6]'}`}>
       <div className={`p-4 border-b-4 flex items-center justify-between mb-6 ${isDarkMode ? 'border-[#3D3D5C]' : 'border-slate-50'}`}>
-        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-mint-dark'}`}>Gran Librería N5-N1</h2>
+        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-mint-dark'}`}>Gran Librería (12 Niveles)</h2>
         <BookOpen className={isDarkMode ? 'text-jp-sun' : 'text-jp-mint'} size={24} />
       </div>
 
@@ -75,11 +107,32 @@ const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
               </div>
 
               <div className="w-full space-y-4">
+                {(selectedWord.categoria === "Verbos" || selectedWord.tipo === "Verbos") && (
+                  <div className={`p-6 rounded-[2.5rem] border-b-4 ${isDarkMode ? 'bg-[#1A1A2E] border-black' : 'bg-jp-sun-light/20 border-jp-sun'}`}>
+                    <p className={`text-[10px] font-black uppercase mb-4 tracking-[0.2em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-ink'}`}>Rueda de Niveles (Conjugación)</p>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {[1, 2, 3, 4, 7, 8, 10, 12].map(lvl => (
+                        <button
+                          key={lvl}
+                          onClick={() => setAppliedLevel(lvl)}
+                          className={`w-10 h-10 rounded-full font-black text-xs transition-all active:scale-90 border-b-2 ${
+                            appliedLevel === lvl
+                              ? (isDarkMode ? 'bg-jp-sun text-black border-black/20' : 'bg-jp-red text-white border-jp-red-dark')
+                              : (isDarkMode ? 'bg-[#242444] text-white border-black' : 'bg-white text-slate-400 border-slate-100')
+                          }`}
+                        >
+                          {lvl}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{getLevelInfo(appliedLevel)}</p>
+                  </div>
+                )}
+
                 <div className={`p-6 rounded-[2.5rem] text-left border-b-4 ${isDarkMode ? 'bg-[#1A1A2E] border-black' : 'bg-slate-50 border-slate-100'}`}>
                   <p className={`flex items-center gap-2 text-[11px] font-black uppercase mb-3 tracking-widest ${isDarkMode ? 'text-jp-sun' : 'text-slate-400'}`}><Info size={16}/> Información Profesional</p>
                   <p className="text-sm font-bold leading-relaxed">
-                    Este término es clave en <span className={isDarkMode ? 'text-jp-sun' : 'text-jp-mint-dark'}>{selectedWord.tipo || 'el día a día'}</span>.
-                    Nivel sugerido: <span className="underline font-black">{selectedWord.grupo || 'N5'}</span>.
+                    Forma Nivel {appliedLevel}: <span className="font-black underline">{conjugateWord(selectedWord, appliedLevel)}</span>
                   </p>
                 </div>
 

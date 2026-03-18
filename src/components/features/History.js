@@ -7,7 +7,7 @@ const HistoryList = ({ userStats, isDarkMode }) => {
   return (
     <section className={`p-6 md:p-8 card-bubble flex flex-col h-[75vh] animate-pop-in relative overflow-hidden transition-all ${isDarkMode ? 'bg-[#242444] border-jp-sun' : 'bg-white border-[#F0EAD6]'}`}>
       <div className={`p-4 border-b-4 flex items-center justify-between mb-6 ${isDarkMode ? 'border-[#3D3D5C]' : 'border-slate-50'}`}>
-        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-slate-400'}`}>Últimas Radiografías (Nivel N5)</h2>
+        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-slate-400'}`}>Últimas Radiografías (Niveles 1-12)</h2>
         <HistoryIcon className={isDarkMode ? 'text-jp-sun' : 'text-slate-300'} size={24} />
       </div>
 

@@ -3,36 +3,40 @@ import { Layers, Search, ChevronRight, Zap } from 'lucide-react';
 
 const GrammarManual = ({ grammarManual, isDarkMode }) => {
   const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('N5');
+  const [selectedFase, setSelectedFase] = useState(1);
 
-  const categories = ['N5', 'N4', 'N3', 'N2', 'N1'];
+  const fases = [
+    { id: 1, name: 'Cimientos', icon: '🏛️' },
+    { id: 2, name: 'Color', icon: '🎨' },
+    { id: 3, name: 'Fluidez', icon: '🌊' }
+  ];
 
   const rulesArray = Object.entries(grammarManual).map(([id, data]) => ({ id, ...data }));
   const filteredRules = rulesArray.filter(r =>
-    (r.nivel === selectedCategory || (!r.nivel && selectedCategory === 'N5')) &&
+    (r.fase === selectedFase) &&
     (r.regla.toLowerCase().includes(search.toLowerCase()) ||
      r.detalles?.some(d => d.toLowerCase().includes(search.toLowerCase())))
-  );
+  ).sort((a, b) => a.nivel - b.nivel);
 
   return (
     <section className={`p-6 md:p-8 card-bubble flex flex-col h-[75vh] animate-pop-in relative overflow-hidden transition-all ${isDarkMode ? 'bg-[#242444] border-jp-sun' : 'bg-white border-[#F0EAD6]'}`}>
       <div className={`p-4 border-b-4 flex items-center justify-between mb-6 ${isDarkMode ? 'border-[#3D3D5C]' : 'border-slate-50'}`}>
-        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-purple-dark'}`}>Manual de Gramática N5-N1</h2>
+        <h2 className={`text-xs font-black uppercase tracking-[0.4em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-purple-dark'}`}>Catálogo Maestro (12 Niveles)</h2>
         <Layers className={isDarkMode ? 'text-jp-sun' : 'text-jp-purple'} size={24} />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-4 mb-4">
-        {categories.map(cat => (
+      <div className="flex gap-3 overflow-x-auto no-scrollbar pb-4 mb-4">
+        {fases.map(f => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-8 py-3 rounded-full text-xs font-black uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center gap-2 border-b-4 ${
-              selectedCategory === cat
+            key={f.id}
+            onClick={() => setSelectedFase(f.id)}
+            className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 flex items-center gap-2 border-b-4 whitespace-nowrap ${
+              selectedFase === f.id
                 ? (isDarkMode ? 'bg-jp-sun text-black border-black/20 shadow-lg' : 'bg-jp-purple text-white border-jp-purple-dark shadow-lg')
                 : (isDarkMode ? 'bg-[#1A1A2E] text-slate-400 border-black' : 'bg-white text-slate-400 border-slate-100 shadow-sm hover:border-jp-purple')
             }`}
           >
-            {cat}
+            <span className="text-sm">{f.icon}</span> Fase {f.id}: {f.name}
           </button>
         ))}
       </div>
@@ -69,7 +73,7 @@ const GrammarManual = ({ grammarManual, isDarkMode }) => {
                 </div>
                 <div>
                   <h3 className="text-xl font-black tracking-tight">{rule.regla}</h3>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Nivel {selectedCategory}</p>
+                  <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${isDarkMode ? 'text-jp-sun' : 'text-jp-purple-dark'}`}>Nivel {rule.nivel}: {rule.cat?.split(': ')[1]}</p>
                 </div>
               </div>
 
