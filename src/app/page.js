@@ -123,6 +123,7 @@ export default function App() {
       }
     };
 
+    initData();
     if (!user) return;
 
     const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
