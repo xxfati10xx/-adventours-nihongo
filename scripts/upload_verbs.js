@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, writeBatch } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDCDMIXn6ddA_RMLpN1_AgC4eVAQMl4ciw",
+  apiKey: "AIzaSyCIZ_D9h-ZJ0AueFinQXu4VxSpx1p68QP8",
   authDomain: "adventours-nihongo.firebaseapp.com",
   projectId: "adventours-nihongo",
   storageBucket: "adventours-nihongo.firebasestorage.app",
@@ -15,9 +15,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const appId = 'adventours-cr-nihongo';
 
-// List of 1000 verbs (simulated for now, let's create 1000 items)
-const VERBS_DATA = [];
-const baseVerbs = [
+const VERBS_DATA = [
+  { romaji: "hoshigaru", esp: "querer", claves: ["querer", "desear"], tipo: "Verbos", categoria: "Verbos", grupo: "SENTIMIENTO" },
+  { romaji: "inu", esp: "perro", claves: ["perro"], tipo: "Animal", categoria: "Sustantivo", grupo: "NATURALEZA" },
   { romaji: "taberu", esp: "comer", claves: ["comer"], tipo: "Verbos", categoria: "Verbos", grupo: "ACCION" },
   { romaji: "nomu", esp: "beber", claves: ["beber"], tipo: "Verbos", categoria: "Verbos", grupo: "ACCION" },
   { romaji: "miru", esp: "ver", claves: ["ver"], tipo: "Verbos", categoria: "Verbos", grupo: "PERCEPCION" },
@@ -25,13 +25,12 @@ const baseVerbs = [
   { romaji: "kaku", esp: "escribir", claves: ["escribir"], tipo: "Verbos", categoria: "Verbos", grupo: "ACCION" },
   { romaji: "yomu", esp: "leer", claves: ["leer"], tipo: "Verbos", categoria: "Verbos", grupo: "ACCION" },
   { romaji: "iku", esp: "ir", claves: ["ir"], tipo: "Verbos", categoria: "Verbos", grupo: "MOVIMIENTO" },
-  { romaji: "kuru", esp: "venir", claves: ["venir"], tipo: "Verbos", categoria: "Verbos", grupo: "MOVIMIENTO" },
-  { romaji: "kaeru", esp: "volver", claves: ["volver"], tipo: "Verbos", categoria: "Verbos", grupo: "MOVIMIENTO" },
   { romaji: "suru", esp: "hacer", claves: ["hacer"], tipo: "Verbos", categoria: "Verbos", grupo: "ACCION" }
 ];
 
-for(let i = 0; i < 1000; i++) {
-  const base = baseVerbs[i % baseVerbs.length];
+// Generating 1000 items
+for(let i = 0; i < 990; i++) {
+  const base = VERBS_DATA[i % VERBS_DATA.length];
   VERBS_DATA.push({
     ...base,
     romaji: `${base.romaji}-${i}`,
@@ -44,7 +43,7 @@ async function uploadData() {
   const vocabRef = collection(db, 'artifacts', appId, 'public', 'data', 'vocabulary');
   const CHUNK_SIZE = 500;
 
-  console.log(`Iniciando subida de ${VERBS_DATA.length} verbos...`);
+  console.log(`Iniciando subida de ${VERBS_DATA.length} vocablos...`);
 
   for (let i = 0; i < VERBS_DATA.length; i += CHUNK_SIZE) {
     const chunk = VERBS_DATA.slice(i, i + CHUNK_SIZE);
@@ -60,7 +59,7 @@ async function uploadData() {
     console.log(`Lote completado: ${Math.min(i + CHUNK_SIZE, VERBS_DATA.length)} / ${VERBS_DATA.length}`);
   }
 
-  console.log("¡Subida de verbos completada!");
+  console.log("¡Subida completada!");
   process.exit();
 }
 

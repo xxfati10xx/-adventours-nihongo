@@ -22,7 +22,7 @@ export const ai = getAI(app, { backend: new VertexAIBackend() });
 export const generativeModel = getGenerativeModel(ai, { model: "gemini-2.0-flash" });
 export const generativeModelFallback = getGenerativeModel(ai, { model: "gemini-1.5-flash" });
 export const appId = 'adventours-cr-nihongo';
-export const APP_VERSION = '1.0.2'; // Forced cache refresh for new 12-level system
+export const APP_VERSION = '1.0.3'; // Forced cache refresh for new 12-level system
 
 export const MASTER_SEED = {
   GRAMMAR: {
