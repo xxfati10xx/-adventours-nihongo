@@ -1,6 +1,6 @@
 # AdventoursCR Nihongo - Project PRD
 
-**Document Version:** 1.1
+**Document Version:** 1.0
 **Status:** Approved
 **Platform:** Mobile-First (APK via Capacitor)
 **Design Philosophy:** Tactile Zen & 3D Bubble Play
@@ -27,7 +27,6 @@ Traditional language apps often feel flat, sterile, or overly game-like without 
     *   Provide instant structural analysis ("Radiografía") for any Japanese sentence.
     *   Gamify the learning process using the "Bushido Path" (XP and Belt progression).
     *   Offer 24/7 AI-powered tutoring with a "Zen" personality.
-    *   Provide a massive database of 1000+ verbs for comprehensive practice.
 *   **Non-Goals:** This version does not include real-time voice recognition or social competitive leaderboards.
 
 ---
@@ -46,13 +45,13 @@ Traditional language apps often feel flat, sterile, or overly game-like without 
 *   **Functionality:** Identifies subjects, objects, verbs, and particles (WA, WO, NI). Uses 3D bubble components to represent sentence blocks.
 *   **Hanko Trigger:** Valid translations trigger a visual "Hanko" (stamp) of approval.
 
-### B. Zen AI Sensei (Chat) & Kawaii Mascot
-*   **Feature:** An AI tutor powered by Gemini 2.0 Flash and a draggable "Kawaii" Mascot.
-*   **Functionality:** The Mascot provides contextual help and can be moved by the user to avoid interfering with content. The AI answers grammar questions in a calm, commercial-zen tone.
+### B. Zen AI Sensei (Chat)
+*   **Feature:** An AI tutor powered by Gemini 2.0 Flash (with DeepSeek fallback).
+*   **Functionality:** Answers grammar questions, explains cultural nuances, and provides examples in a calm, commercial-zen tone.
 
 ### C. Dynamic 3D Library (Dictionary)
-*   **Feature:** A specialized dictionary with professional contexts and 1000+ verbs.
-*   **Functionality:** Features 3D rotating cards with "Technical Sheets". UI is optimized for mobile with scrollable detail views.
+*   **Feature:** A specialized dictionary with professional contexts.
+*   **Functionality:** Features 3D rotating cards with "Technical Sheets" for Business, Medical, and Legal fields.
 
 ### D. Bushido Progression System
 *   **Feature:** A holistic gamification engine.
@@ -92,4 +91,4 @@ Traditional language apps often feel flat, sterile, or overly game-like without 
 ## 9. Aesthetics (The "Look & Feel")
 *   **Colors:** Japan Red (#EF3340), Soft Mint (#98FFD9), Sky Blue (#87CEEB).
 *   **Components:** 2rem rounded borders, 4px/8px bottom-border extrusions (3D effect), and backdrop-blur glassmorphism.
-*   **Mascot:** A draggable, "Kawaii" Fox Sensei character.
+*   **Mascot:** A persistent Sensei character providing contextual encouragement.
