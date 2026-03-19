@@ -1,112 +1,73 @@
 @import "tailwindcss";
 
 @theme {
-  --color-jp-red-light: #FFB3B3;
-  --color-jp-red: #FF8080;
-  --color-jp-red-dark: #FF4D4D;
-
-  --color-jp-mint-light: #E0FFF0;
-  --color-jp-mint: #B3FFCC;
-  --color-jp-mint-dark: #80FFB3;
-
-  --color-jp-sky-light: #E6F3FF;
-  --color-jp-sky: #B3D9FF;
-  --color-jp-sky-dark: #80BFFF;
-
-  --color-jp-sun-light: #FFFFE0;
-  --color-jp-sun: #FFFFB3;
-  --color-jp-sun-dark: #FFFF80;
-
-  --color-jp-purple-light: #F2E6FF;
-  --color-jp-purple: #E6CCFF;
-  --color-jp-purple-dark: #D9B3FF;
-
-  --color-japanese-paper: #FAF7F2;
-  --color-japanese-ink: #2C3E50;
-
   --radius-bubble: 2rem;
   --radius-bubble-sm: 1rem;
 }
 
 :root {
-  --japanese-red: #FF8080;
-  --japanese-red-shadow: #E66666;
-  --japanese-paper: #FAF7F2;
-  --japanese-ink: #2C3E50;
-  --dark-bg: #1A1A2E;
-  --dark-surface: #242444;
+  --japanese-paper: #f8f6f2;
+  --japanese-ink: #2e2f2d;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
 }
 
-/* 3D Bubble Button Utility */
-.btn-bubble-red {
-  background-color: #FF8080;
-  border-bottom: 4px solid #E66666;
-  color: white;
+/* 3D Bubble Button Utilities using Theme Tokens */
+.btn-bubble-primary {
+  background-color: var(--color-primary);
+  border-bottom: 6px solid var(--color-primary-dim);
+  color: var(--color-on-primary);
   transition: all 0.1s ease;
 }
-.btn-bubble-red:active {
+.btn-bubble-primary:active {
   transform: translateY(2px);
   border-bottom-width: 2px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-.btn-bubble-mint {
-  background-color: #B3FFCC;
-  border-bottom: 4px solid #80FFB3;
-  color: #1B4D3E;
+.btn-bubble-secondary {
+  background-color: var(--color-secondary-container);
+  border-bottom: 6px solid var(--color-secondary-dim);
+  color: var(--color-on-secondary-container);
   transition: all 0.1s ease;
 }
-.btn-bubble-mint:active {
+.btn-bubble-secondary:active {
   transform: translateY(2px);
   border-bottom-width: 2px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
-.btn-bubble-sky {
-  background-color: #B3D9FF;
-  border-bottom: 4px solid #80BFFF;
-  color: #1A3A5A;
+.btn-bubble-tertiary {
+  background-color: var(--color-tertiary-container);
+  border-bottom: 6px solid var(--color-tertiary-dim);
+  color: var(--color-on-tertiary-container);
   transition: all 0.1s ease;
 }
-.btn-bubble-sky:active {
+.btn-bubble-tertiary:active {
   transform: translateY(2px);
   border-bottom-width: 2px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 /* Card Style */
 .card-bubble {
   border-radius: 2rem;
-  border: 3px solid #F0EAD6;
-  box-shadow: 0 8px 0 #F0EAD6;
+  border-bottom: 8px solid var(--color-surface-variant);
+  background-color: var(--color-surface-container-lowest);
+  box-shadow: 0 20px 40px rgba(46, 47, 45, 0.06);
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.dark .card-bubble {
-  border-color: #3D3D5C;
-  box-shadow: 0 8px 0 #3D3D5C;
-  background-color: #242444;
+.card-bubble:hover {
+  transform: translateY(-4px);
 }
 
 /* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #E8DCC4;
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-
 .custom-scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -127,47 +88,29 @@ body {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-10px) rotate(2deg); }
 }
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Sakura Rain (Updated for playfulness) */
+/* Sakura Rain */
 @keyframes sakura-fall {
-  0% {
-    transform: translateY(-10vh) translateX(0) rotate(0deg);
-    opacity: 0;
-  }
-  20% { opacity: 1; }
-  100% {
-    transform: translateY(110vh) translateX(100px) rotate(720deg);
-    opacity: 0;
-  }
+  0% { transform: translateY(-10vh) translateX(0) rotate(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(110vh) translateX(20vw) rotate(360deg); opacity: 0; }
 }
 
 .sakura-petal {
   position: fixed;
-  top: -10vh;
+  color: #ffb7c5;
+  font-size: 1.5rem;
   pointer-events: none;
-  z-index: 1;
-  background: linear-gradient(to bottom right, #FFB3B3, #FFD9D9);
-  border-radius: 100% 0% 100% 0% / 100% 0% 100% 0%;
-}
-
-/* Victory Explosion */
-@keyframes victory-confetti {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); opacity: 0; }
-}
-
-.victory-particle {
-  position: absolute;
-  pointer-events: none;
-  animation: victory-confetti 0.6s ease-out forwards;
+  z-index: 60;
+  animation: sakura-fall linear infinite;
 }
 
 /* 3D Flip Card */
@@ -183,45 +126,29 @@ body {
   backface-visibility: hidden;
 }
 
-/* Theme Transition */
-.theme-transition {
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
-}
-
-/* Mascot Bounce */
+/* Mascot Animation */
 @keyframes mascot-bounce {
-  0%, 100% { transform: translateY(0) rotate(-5deg); }
-  50% { transform: translateY(-5px) rotate(5deg); }
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
 }
 
 .mascot-anim {
   animation: mascot-bounce 2s ease-in-out infinite;
 }
 
-/* Hanko Stamp */
-.hanko-stamp {
-  width: 80px;
-  height: 80px;
-  border: 6px solid #FF8080;
-  color: #FF8080;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 1.4rem;
-  background: white;
-  box-shadow: 0 10px 0 #FFB3B3;
-  text-transform: uppercase;
-  transform: rotate(-15deg);
-}
-
-@keyframes stampImpact {
-  0% { transform: scale(3) rotate(-40deg); opacity: 0; }
-  60% { transform: scale(0.9) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(-15deg); opacity: 1; }
+/* Hanko Stamp Animation */
+@keyframes hanko-thud {
+  0% { transform: scale(3); opacity: 0; }
+  70% { transform: scale(1); opacity: 1; }
+  80% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .animate-hanko {
-  animation: stampImpact 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation: hanko-thud 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.hanko-stamp {
+  box-shadow: inset 0 0 0 2px rgba(186, 0, 35, 0.1);
+  background-image: radial-gradient(circle, rgba(186, 0, 35, 0.05) 10%, transparent 70%);
 }
