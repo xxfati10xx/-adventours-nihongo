@@ -1,96 +1,95 @@
-### **AdventoursCR Nihongo - Project PRD / Brief**
+# AdventoursCR Nihongo - Project PRD
 
-**Document Version:** 1.4
-**Date:** 2026-03-19
-**Author:** Jules (AI Lead Engineer)
+**Document Version:** 1.1
 **Status:** Approved
+**Platform:** Mobile-First (APK via Capacitor)
+**Design Philosophy:** Tactile Zen & 3D Bubble Play
 
 ---
 
-**1. Executive Summary**
-AdventoursCR Nihongo is a premium Japanese learning application optimized for mobile deployment (APK via Capacitor). It utilizes a unique 12-level curriculum divided into three thematic phases: Fase 1 (Cimientos), Fase 2 (Color), and Fase 3 (Fluidez). The application focuses on structural analysis, specialized professional vocabulary (Business, Medical, Legal), and an immersive, tactile 3D aesthetic ("Tactile Zen") to provide a meditative playground for students.
+## 1. Executive Summary
+AdventoursCR Nihongo is a premium Japanese learning application designed to bridge the gap between academic study and practical, professional application. Utilizing a unique 12-level curriculum divided into three thematic phases (Cimientos, Color, and Fluidez), the app provides a meditative yet playful environment for mastering Japanese grammar, vocabulary, and sentence structure.
 
 ---
 
-**2. Problem Statement**
-Japanese learners often struggle with the transition from standard SVO (Subject-Verb-Object) languages to Japanese's SOV structure and particle system. Existing apps frequently lack:
-*   Visual "dissection" of sentence grammar.
-*   Context-specific vocabulary for high-level professional environments.
-*   A physical, tactile interface that rewards progress with cultural resonance (like the Hanko seal).
-*   Integrated, context-aware AI tutoring that respects a "Zen" commercial tone.
+## 2. Problem Statement
+Traditional language apps often feel flat, sterile, or overly game-like without providing deep structural understanding. Learners struggle with:
+*   Understanding the "why" behind grammar particles (WA, GA, WO).
+*   Visualizing sentence structure (SOV vs SVO).
+*   Connecting vocabulary to professional, real-world contexts.
+*   Maintaining long-term motivation without a clear, culturally resonant progression system.
 
 ---
 
-**3. Goals & Objectives**
-*   **Primary Goal:** Enable functional literacy and structural mastery of Japanese across 12 levels.
+## 3. Goals & Objectives
+*   **Primary Goal:** Enable users to achieve functional Japanese literacy through a structured 12-level curriculum.
 *   **Secondary Goals:**
-    *   Implement "Radiografía Gramatical" for real-time sentence analysis.
-    *   Achieve "Zero Cost" scalability using Firebase Spark and Gemini Free-tier AI.
-    *   Maintain a high-engagement gamification system (XP, Streaks, Belts).
-    *   Provide a library of 1,000+ verbs with 3D flashcard interaction.
-*   **Non-Goals:** Real-time audio conversation or multiplayer competitive leaderboards in the initial APK release.
+    *   Provide instant structural analysis ("Radiografía") for any Japanese sentence.
+    *   Gamify the learning process using the "Bushido Path" (XP and Belt progression).
+    *   Offer 24/7 AI-powered tutoring with a "Zen" personality.
+    *   Provide a massive database of 1000+ verbs for comprehensive practice.
+*   **Non-Goals:** This version does not include real-time voice recognition or social competitive leaderboards.
 
 ---
 
-**4. Target Audience**
-*   **Self-taught enthusiasts:** Seeking a structured, visual path to fluency.
-*   **International Professionals:** Needing Medical, Legal, or Business Japanese terminology.
-*   **Kinesthetic/Visual Learners:** Who benefit from "Tactile Zen" 3D interactions and color-coded grammar.
+## 4. Target Audience
+*   **Self-taught learners:** Seeking a structured path outside of traditional JLPT levels.
+*   **Professional students:** Needing context for Business, Medical, or Legal Japanese.
+*   **Visual learners:** Who benefit from 3D UI, color-coded grammar, and structural breakdowns.
 
 ---
 
-**5. Solution Overview & Key Features**
-*   **Smart Translator ("Radiografía"):** A tool that breaks down phrases into romaji, particles, and grammatical roles (Subject, Object, Verb) with 3D bubble visuals.
-*   **Zen AI Sensei:** A multi-tier AI chat fallback system (Gemini 2.0 -> 1.5 -> DeepSeek -> Local) providing a helpful, calm tutor personality.
-*   **Kawaii Mascot:** A draggable "Fox Sensei" SVG that provides interactive messages and moves freely on the mobile canvas.
-*   **Bushido Path:** A gamification system tracking progress from White Belt (Blanco) to Black Belt (Negro) via XP and streaks.
-*   **3D Professional Dictionary:** Specialized terminology cards with rotating 3D animations and "Technical Sheets" for usage context.
-*   **Grammar Manual:** A searchable curriculum navigator for the 12-level system.
-*   **SRS Flashcards:** A daily study engine with flip-card mechanics.
+## 5. Solution Overview & Key Features
+
+### A. Smart Translator ("Radiografía Gramatical")
+*   **Feature:** A visual breakdown tool that "dissects" sentences.
+*   **Functionality:** Identifies subjects, objects, verbs, and particles (WA, WO, NI). Uses 3D bubble components to represent sentence blocks.
+*   **Hanko Trigger:** Valid translations trigger a visual "Hanko" (stamp) of approval.
+
+### B. Zen AI Sensei (Chat) & Kawaii Mascot
+*   **Feature:** An AI tutor powered by Gemini 2.0 Flash and a draggable "Kawaii" Mascot.
+*   **Functionality:** The Mascot provides contextual help and can be moved by the user to avoid interfering with content. The AI answers grammar questions in a calm, commercial-zen tone.
+
+### C. Dynamic 3D Library (Dictionary)
+*   **Feature:** A specialized dictionary with professional contexts and 1000+ verbs.
+*   **Functionality:** Features 3D rotating cards with "Technical Sheets". UI is optimized for mobile with scrollable detail views.
+
+### D. Bushido Progression System
+*   **Feature:** A holistic gamification engine.
+*   **Functionality:** Tracks XP, daily streaks, and levels users through belts (Blanco to Negro).
+*   **Visuals:** Sakura progress bars and 3D belt icons.
+
+### E. Spaced Repetition Flashcards
+*   **Feature:** Daily study sessions.
+*   **Functionality:** 10-word daily sets with 3D flip animations to reinforce "Mastery Strength."
 
 ---
 
-**6. User Stories / Requirements**
-*   **Grammar Analysis:** *As a learner, I want to type a sentence and see its visual "Radiografía" highlighting the particles 'wa' and 'wo' so I can understand their structural roles.*
-*   **Professional Context:** *As a business professional, I want to search for "Contract" and see the 3D card for 契約 (Keiyaku) with usage examples so I can use it correctly in a meeting.*
-*   **Gamification:** *As a user, I want to earn XP for every study session and maintain my "Fire" streak so I can advance from Orange Belt to Green Belt.*
-*   **AI Tutoring:** *As a student, I want to ask the Zen AI Sensei a question about complex grammar and receive an explanation that fits the commercial-zen tone of the app.*
-*   **Navigation:** *As a mobile user, I want a draggable mascot so I can move it away from text I'm trying to read without losing the Sensei's presence.*
-*   **Spaced Repetition:** *As a learner, I want to review 10 daily words using flashcards so I can reinforce my mastery of new vocabulary over time.*
-*   **Review:** *As a user, I want to see my last 20 dissected phrases in a history list so I can quickly review previous learning moments.*
+## 6. Technical Considerations & Integrations
+*   **Frontend:** Next.js 15 (App Router) with React 19.
+*   **Styling:** Tailwind CSS 4.0 using the "3D Bubble" utility classes and "Tactile Zen" palette.
+*   **Backend:** Firebase (Firestore for vocabulary/progress, Anonymous Auth).
+*   **Mobile Bridge:** Capacitor for native Android (APK) deployment.
+*   **AI:** Multi-tier strategy using @google/generative-ai (Free tier/Zero cost) and DeepSeek API.
+*   **Persistence:** LocalStorage caching for "Zero Cost" Firestore operations.
 
 ---
 
-**7. Technical Considerations & Integrations**
-*   **Tech Stack:** Next.js 15 (App Router), React 19, Tailwind CSS 4.0.
-*   **Mobile Bridge:** Capacitor 8.0+ for native Android APK generation.
-*   **Database:** Firebase Firestore with LocalStorage caching for offline-first behavior and cost minimization.
-*   **AI Integration:** @google/generative-ai (Spark Plan compatible).
-*   **Design Tokens:** Specialized palette including Japan Red (#BA0023) and Soft Mint (#8FF6D0), with 2rem (lg) ultra-rounding for the "Bubble" effect.
+## 7. Success Metrics
+*   **Retention:** 7-day streak maintenance for >40% of active users.
+*   **Engagement:** Average of 5 "Radiografías" performed per session.
+*   **Progression:** User advancement from Fase 1 to Fase 2 within 30 days of active study.
 
 ---
 
-**8. Success Metrics**
-*   **Daily Engagement:** Average of 15 minutes of study per active user.
-*   **Curriculum Advancement:** >30% of users reaching Fase 2 within their first month.
-*   **Accuracy:** Successful "Radiografía" mapping for 95% of standard Level 1-5 Japanese sentence structures.
+## 8. Risks & Assumptions
+*   **Risk:** API latency for AI responses. *Mitigation:* Local deterministic response engine as a final fallback.
+*   **Assumption:** Users prefer a "curriculum-based" approach over a standard dictionary search.
+*   **Cost Management:** Assumption that Firebase Spark plan and Gemini Free tier will sustain initial user growth.
 
 ---
 
-**9. Risks & Assumptions**
-*   **Risks:** Potential AI API downtime. *Mitigation:* Multi-provider fallback and deterministic local responses.
-*   **Assumptions:** Mobile users prefer a persistent bottom-navigation bar for quick context switching between Learn, Library, and AI tools.
-
----
-
-**10. High-Level Timeline**
-*   **Fase 1 (Cimientos):** Core structure, particles, and Level 1-4 Grammar logic. (Complete)
-*   **Fase 2 (Color):** 1000-verb database, specialized contexts, and Belt Path. (Complete)
-*   **Fase 3 (Fluidez):** AI Tutor refinement, PWA/APK optimization, and final polishing. (Active)
-
----
-
-**11. Stakeholders**
-*   **Owner:** AdventoursCR Learning Team.
-*   **Lead Engineer:** Jules (Lead Agent).
-*   **Deployment:** Google Play Store (via Capacitor APK).
+## 9. Aesthetics (The "Look & Feel")
+*   **Colors:** Japan Red (#EF3340), Soft Mint (#98FFD9), Sky Blue (#87CEEB).
+*   **Components:** 2rem rounded borders, 4px/8px bottom-border extrusions (3D effect), and backdrop-blur glassmorphism.
+*   **Mascot:** A draggable, "Kawaii" Fox Sensei character.
