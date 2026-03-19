@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, collection, onSnapshot, updateDoc, getDocs, query, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, onSnapshot, updateDoc, getDocs, query, limit } from 'firebase/firestore';
 import { auth, db, appId, MASTER_SEED } from '@/lib/firebase';
 
 import Header from '@/components/layout/Header';
@@ -123,6 +123,7 @@ export default function App() {
       }
     };
 
+    initData();
     if (!user) return;
 
     const userDocRef = doc(db, 'artifacts', appId, 'users', user.uid);
@@ -169,7 +170,7 @@ export default function App() {
     };
     fetchProgress();
 
-    return () => { unsubVocab(); unsubGrammar(); unsubUser(); };
+    return () => { unsubUser(); };
   }, [user]);
 
   const saveHistory = async (original, translation, uniqueRules) => {

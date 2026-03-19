@@ -91,7 +91,7 @@ const Dictionary = ({ dictionary, search, setSearch, isDarkMode }) => {
 
       {selectedWord && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#1A1A2E]/80 backdrop-blur-md animate-pop-in">
-          <div className={`w-full max-w-lg p-8 rounded-[3rem] border-b-8 shadow-2xl relative ${isDarkMode ? 'bg-[#242444] border-black text-white' : 'bg-white border-[#F0EAD6] text-jp-ink'}`}>
+          <div className={`w-full max-w-lg max-h-[90vh] overflow-y-auto p-8 rounded-[3rem] border-b-8 shadow-2xl relative custom-scrollbar ${isDarkMode ? 'bg-[#242444] border-black text-white' : 'bg-white border-[#F0EAD6] text-jp-ink'}`}>
             <button
               onClick={() => setSelectedWord(null)}
               className={`absolute top-6 right-6 p-3 rounded-full hover:bg-slate-100 transition-all active:scale-90 ${isDarkMode ? 'hover:bg-jp-sun/20' : 'hover:bg-jp-red/10'}`}
